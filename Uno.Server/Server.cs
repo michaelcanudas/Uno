@@ -15,7 +15,6 @@ public class Packet
 {
     public Packet()
     {
-        Server.Instance.Packets 
     }
 }
 

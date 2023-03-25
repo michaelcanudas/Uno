@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Telepathy" Version="1.0.341" />
+  </ItemGroup>
+
 </Project>

@@ -12,7 +12,8 @@ namespace Uno.Client;
 internal class CardRenderer
 {
     private ITexture cardSpriteSheet;
-    private Dictionary<CardFace, Rectangle> cardBounds = new();
+    private readonly Dictionary<CardFace, Rectangle> cardBounds = new();
+    
 
     public const float CardWidth = 70;
     public const float CardHeight = 106;
@@ -37,22 +38,46 @@ internal class CardRenderer
 
     public Rectangle GetCardBounds(CardFace card)
     {
-        const float baseX = 414;
-        const float baseY = 123;
-
         const float cardSeparationX = 3;
         const float cardSeparationY = 10;
+
+        if (card.Kind is CardKind.Wild or CardKind.WildDraw4)
+        {
+            // draw wildcard
+            
+            const float wildBaseX = 413;
+            const float wildBaseY = 587;
+
+            int index = (int)card.Color;
+
+            if (card.Kind is CardKind.WildDraw4)
+            {
+                index += 5;
+            }
+
+            return new Rectangle(wildBaseX + index * (cardSeparationX + CardWidth), wildBaseY, CardWidth, CardHeight);
+        }
+
+        if (card.Color is CardColor.Neutral)
+        {
+            // draw card backface
+
+            return new(5, 21, CardWidth, CardHeight);
+        }
+
+        const float baseX = 414;
+        const float baseY = 123;
 
         return new Rectangle(baseX + (int)card.Kind * (CardWidth + cardSeparationX), baseY + (int)card.Color * (CardHeight + cardSeparationY), CardWidth, CardHeight);
     }
 
-    public void DrawCard(ICanvas canvas, CardFace face, Rectangle destination)
+    public void DrawCard(ICanvas canvas, CardFace card, Rectangle destination)
     {
-        canvas.DrawTexture(cardSpriteSheet, cardBounds[face], destination);
+        canvas.DrawTexture(cardSpriteSheet, GetCardBounds(card), destination);
     }
 
-    public void DrawCard(ICanvas canvas, CardFace face, Vector2 position, Alignment alignment = Alignment.TopLeft)
+    public void DrawCard(ICanvas canvas, CardFace card, Vector2 position, Alignment alignment = Alignment.TopLeft)
     {
-        canvas.DrawTexture(cardSpriteSheet, cardBounds[face], new(position, new(CardWidth, CardHeight), alignment));
+        canvas.DrawTexture(cardSpriteSheet, GetCardBounds(card), new(position, new(CardWidth, CardHeight), alignment));
     }
 }

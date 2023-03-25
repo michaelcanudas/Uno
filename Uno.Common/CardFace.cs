@@ -9,6 +9,8 @@ namespace Uno;
 // represents one card in a deck
 public record struct CardFace(CardKind Kind, CardColor Color)
 {
+    public static readonly CardFace Backface = new(CardKind.One, CardColor.Neutral); // any non-wild neutral is drawn as a backface
+
     // can this card be played on top of other?
     public bool CanBePlayedOn(CardFace other)
     {
@@ -28,8 +30,8 @@ public record struct CardFace(CardKind Kind, CardColor Color)
 
         random ??= System.Random.Shared;
 
-        CardColor color = (CardColor)random.Next(0, 4);
-        CardKind kind = (CardKind)random.Next(0, 13);
+        CardKind kind = (CardKind)random.Next(0, 15);
+        CardColor color = (CardColor)random.Next(0, kind is CardKind.Wild or CardKind.WildDraw4 ? 5 : 4);
 
         return new(kind, color);
     }

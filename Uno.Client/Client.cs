@@ -1,6 +1,8 @@
 ﻿using Telepathy;
 using Uno;
 
+namespace Uno.Client;
+
 class Client
 {
     // Hello Michael

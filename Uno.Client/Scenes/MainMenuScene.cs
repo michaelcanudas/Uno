@@ -4,14 +4,13 @@ using SimulationFramework.Drawing;
 using System;
 using System.Buffers.Text;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Uno.Client.Scenes;
-internal class JoinServerScene : GameScene
+internal class MainMenuScene : GameScene
 {
     string hostname = "";
     string port = "";
@@ -19,7 +18,7 @@ internal class JoinServerScene : GameScene
 
     List<Vector2> positions = new();
 
-    public JoinServerScene()
+    public MainMenuScene()
     {
     }
 
@@ -28,14 +27,28 @@ internal class JoinServerScene : GameScene
         ImGui.SetNextWindowPos(new(Graphics.GetOutputCanvas().Width / 2, Graphics.GetOutputCanvas().Height / 2), ImGuiCond.Always, new(.5f));
         if (ImGui.Begin("server_select_window", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysAutoResize))
         {
-            ImGui.Text("WELCOME TO UNO");
+            var s = "WELCOME TO UNO";
+
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (i is not 0)
+                    ImGui.SameLine();
+
+                float sat = MathF.Sin(Time.TotalTime);
+                var color = Color.FromHSV(sat * sat, 1, 1);
+
+                ImGui.TextColored(color.AsVector4(), s[i].ToString());
+            }
+
             ImGui.Separator();
 
             ImGui.Text("host name");
             ImGui.SameLine();
             ImGui.TextDisabled("(?)");
+
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("host ip or url. leave blank for default (localhost).");
+                ImGui.SetTooltip("host ip or url.");
+
             ImGui.InputText("##hostname", ref hostname, 128);
 
             ImGui.Text("port");
@@ -43,9 +56,10 @@ internal class JoinServerScene : GameScene
             ImGui.TextDisabled("(?)");
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("port on host. leave blank for default (12345).");
+
             ImGui.InputText("##port", ref port, 5, ImGuiInputTextFlags.CharsDecimal);
             
-            if (ImGui.Button("Load Last"))
+            if (ImGui.Button("Last"))
             {
                 TryLoadLastServerSettings();
             }
@@ -69,21 +83,18 @@ internal class JoinServerScene : GameScene
         base.Update();
     }
 
-    CardRenderer? renderer;
     int fallingCardSeed = Random.Shared.Next();
 
     public override void Render(ICanvas canvas)
     {
-        renderer ??= new();
-
-        int fallingCardCount = 2 * (int)( (canvas.Width * canvas.Height) / (CardRenderer.CardHeight * CardRenderer.CardHeight) );
+        int fallingCardCount = (int)( (canvas.Width * canvas.Height) / (CardRenderer.CardHeight * CardRenderer.CardHeight) );
         const int fallRateMin = 75;
         const int fallRateMax = 150;
 
         Random rng = new(fallingCardSeed);
 
         float w = canvas.Width + CardRenderer.CardWidth * 2;
-        float h = canvas.Width + CardRenderer.CardWidth * 2;
+        float h = canvas.Height + CardRenderer.CardHeight * 2;
 
         for (int i = 0; i < fallingCardCount; i++)
         {
@@ -96,7 +107,7 @@ internal class JoinServerScene : GameScene
             y %= h;
             y -= CardRenderer.CardHeight;
 
-            renderer.DrawCard(canvas, CardFace.Random(rng), new Vector2(x, y));
+            UnoGame.Current.CardRenderer.DrawCard(canvas, CardFace.Random(rng), new Vector2(x, y));
         }
 
         base.Render(canvas);
@@ -107,21 +118,34 @@ internal class JoinServerScene : GameScene
         try
         {
             if (string.IsNullOrEmpty(hostname))
-                hostname = "localhost";
+            {
+                errmsg = "Invalid host name.";
+                return;
+            }
 
             if (string.IsNullOrEmpty(port))
                 port = "12345";
             
-            if (!int.TryParse(port, out int value))
+            if (int.Parse(port) > ushort.MaxValue)
             {
-                if (value < 0 || value > ushort.MaxValue)
-                {
-                    errmsg = "Invalid port number.";
-                    return;
-                }
+                errmsg = "Invalid port.";
+                return;
             }
 
-            // load client and initiate scene switch
+            // connect client
+            // save settings for next time
+            // create game scene
+            // initiate scene switch
+
+            // IDEA: REFERENCE SERVER PROJECT AND ADD A 'HOST' BUTTON TO DIS MENU
+            
+            // iterators might be cool for the actual gameplay logic
+
+            File.WriteAllLines("last_server.txt", new[] { hostname, port });
+
+            var scene = new GameplayScene(null!); // need to pass client here
+            UnoGame.Current.SwitchScenes(scene);
+
             errmsg = null;
         }
         catch (Exception ex)

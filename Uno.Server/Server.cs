@@ -11,13 +11,6 @@ public class Program
     }
 }
 
-public class Packet
-{
-    public Packet()
-    {
-    }
-}
-
 public class Server
 {
     public static Server Instance { get; } = new();

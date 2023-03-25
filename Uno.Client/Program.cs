@@ -13,6 +13,6 @@ internal static class Program
 {
     private static void Main()
     {
-        new UnoGame(new JoinServerScene()).Run();
+        new UnoGame(new MainMenuScene()).Run();
     }
 }

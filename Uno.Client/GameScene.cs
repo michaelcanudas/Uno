@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Uno.Client;
-internal class GameScene
+internal abstract class GameScene
 {
     public virtual void Render(ICanvas canvas)
     {
@@ -14,6 +14,16 @@ internal class GameScene
     }
 
     public virtual void Update()
+    {
+
+    }
+
+    public virtual void Begin()
+    {
+
+    }
+
+    public virtual void End()
     {
 
     }

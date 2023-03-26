@@ -89,8 +89,7 @@ internal class MainMenuScene : GameScene
                 errmsg = "Invalid port.";
                 return;
             }
-
-            // connect client
+            
             // save settings for next time
             // create game scene
             // initiate scene switch
@@ -107,7 +106,7 @@ internal class MainMenuScene : GameScene
             // NEVERMIND
             // need to do it in the connecting window
             // and maybe we should load some lobby scene ? ie before game started, but you can still see other players
-            windows.Push(new ConnectingWindow($"{hostname}:{port}"));
+            windows.Push(new ConnectingWindow(hostname, int.Parse(port)));
         }
         catch (Exception ex)
         {

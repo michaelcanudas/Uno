@@ -1,59 +1,52 @@
 ﻿using Telepathy;
 
-public class Program
-{
-    public static void Main(string[] args)
-    {
-        while (true)
-        {
-            Server.Instance.Tick();
-        }
-    }
-}
+namespace Uno.Server;
 
-public class Server
+internal static class Server
 {
-    public static Server Instance { get; } = new();
+    private static Telepathy.Server server;
+    private static List<(int id, Packet packet)> packets;
     
-    private Telepathy.Server server;
-    
-    public Server()
+    static Server()
     {
         server = new();
-        server.Start(12345);
+        packets = new();
+    }
+    
+    public static void Start(int port)
+    {
+        server.Start(port);
     }
 
-    public void Tick()
+    public static void Tick()
     {
-        while (server.GetNextMessage(out Message msg))
+        packets.Clear();
+        
+        while (server.GetNextMessage(out Message message))
         {
-            switch (msg.eventType)
+            if (message.eventType == EventType.Connected || message.eventType == EventType.Disconnected)
             {
-                case EventType.Connected:
-                    OnConnect(msg);
-                    break;
-                case EventType.Data:
-                    OnData(msg);
-                    break;
-                case EventType.Disconnected:
-                    OnDisconnect(msg);
-                    break;
+                continue;
             }
+
+            Stream stream = new MemoryStream(message.data);
+            packets.Add((message.connectionId, Packet.Deserialize(stream)));
         }
     }
 
-    private void OnConnect(Message message)
+    public static async void SendAsync(int id, Packet packet)
     {
-        
+        await Task.Run(() =>
+        {
+            MemoryStream stream = new MemoryStream();
+            packet.Serialize(stream);
+
+            server.Send(id, stream.ToArray());
+        });
     }
-
-    private void OnData(Message message)
+    
+    public static IEnumerable<(int, T)> Receive<T>() where T : Packet
     {
-
-    }
-
-    private void OnDisconnect(Message message)
-    {
-
+        return packets.Where(data => data.packet is T).Select(data => (data.id, (data.packet as T)!));
     }
 }

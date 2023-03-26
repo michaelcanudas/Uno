@@ -11,4 +11,8 @@
     <PackageReference Include="Telepathy" Version="1.0.341" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Uno.Common\Uno.Common.csproj" />
+  </ItemGroup>
+
 </Project>

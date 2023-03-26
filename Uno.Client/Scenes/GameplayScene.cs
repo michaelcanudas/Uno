@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Uno.Packets;
 
 namespace Uno.Client.Scenes;
 internal class GameplayScene : GameScene
 {
-    public GameplayScene(Client client)
+    public GameplayScene()
     {
-
+        
     }
 
     public override void Render(ICanvas canvas)
@@ -23,5 +24,11 @@ internal class GameplayScene : GameScene
     public override void Update()
     {
         base.Update();
+        Client.Tick();
+
+        foreach (TextPacket packet in Client.Receive<TextPacket>())
+        {
+            Console.WriteLine(packet.Text);
+        }
     }
 }

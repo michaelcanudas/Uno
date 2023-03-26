@@ -5,19 +5,41 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Uno.Packets;
 
 namespace Uno.Client.Scenes.MainMenu;
 internal class ConnectingWindow : MenuWindow
 {
     private string address;
+    private int port;
 
-    public override string Title => address;
+    public override string Title => address + ":" + port;
 
     public override ImGuiWindowFlags WindowFlags => ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoResize;
 
-    public ConnectingWindow(string address)
+    public ConnectingWindow(string address, int port)
     {
         this.address = address;
+        this.port = port;
+
+        Connect();
+    }
+
+    private void Connect()
+    {
+        Client.StartAsync(address, port).ContinueWith((t) =>
+        {
+            if (t.IsFaulted)
+            {
+                MenuScene.windows.Pop();
+                MenuScene.errmsg = "WHAT THE HEK... no connect :(";
+            }
+            else
+            {
+                Client.SendAsync(new TextPacket("Hello from the client!"));
+                UnoGame.Current.SwitchScenes(new GameplayScene());
+            }
+        });
     }
 
     public override void Layout()

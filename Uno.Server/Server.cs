@@ -1,4 +1,5 @@
 ﻿using Telepathy;
+using Uno.Packets;
 
 namespace Uno.Server;
 
@@ -24,8 +25,15 @@ internal static class Server
         
         while (server.GetNextMessage(out Message message))
         {
-            if (message.eventType == EventType.Connected || message.eventType == EventType.Disconnected)
+            if (message.eventType == EventType.Connected)
             {
+                packets.Add((message.connectionId, new ConnectPacket()));
+                continue;
+            }
+
+            if (message.eventType == EventType.Disconnected)
+            {
+                packets.Add((message.connectionId, new DisconnectPacket()));
                 continue;
             }
 

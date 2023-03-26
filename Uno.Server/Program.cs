@@ -1,6 +1,4 @@
-﻿using Uno.Packets;
-
-namespace Uno.Server;
+﻿namespace Uno.Server;
 
 internal static class Program
 {
@@ -12,18 +10,6 @@ internal static class Program
         {
             Server.Tick();
             Game.Tick();
-        }
-    }
-}
-
-internal static class Game
-{
-    public static void Tick()
-    {
-        foreach ((int id, TextPacket packet) in Server.Receive<TextPacket>())
-        {
-            Console.WriteLine($"Received message of: {packet.Text} from {id}");
-            Server.SendAsync(id, new TextPacket("Message has been receieved"));
         }
     }
 }

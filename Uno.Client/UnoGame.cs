@@ -58,7 +58,7 @@ internal class UnoGame : Simulation
         {
             if (shouldToggleFullscreen)
             {
-                // the the window is maximized the gets screwed up
+                // when the window is maximized it gets screwed up
                 // i am going to rewrite sf's window code soon
 
                 var config = AppConfig.Create();
@@ -86,6 +86,9 @@ internal class UnoGame : Simulation
 
     public override void OnRender(ICanvas canvas)
     {
+        if (Client.IsConnected)
+            Client.Tick();
+
         shouldToggleFullscreen = Keyboard.IsKeyPressed(Key.F11);
         if (nextScene is not null)
         {

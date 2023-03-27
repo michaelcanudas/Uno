@@ -8,10 +8,14 @@ internal static class Server
     private static Telepathy.Server server;
     private static List<(int id, Packet packet)> packets;
     
+    public static HashSet<int> Connections { get; }
+
     static Server()
     {
         server = new();
         packets = new();
+
+        Connections = new();
     }
     
     public static void Start(int port)
@@ -28,17 +32,20 @@ internal static class Server
             if (message.eventType == EventType.Connected)
             {
                 packets.Add((message.connectionId, new ConnectPacket()));
+                Connections.Add(message.connectionId);
                 continue;
             }
 
             if (message.eventType == EventType.Disconnected)
             {
                 packets.Add((message.connectionId, new DisconnectPacket()));
+                Connections.Remove(message.connectionId);
                 continue;
             }
 
             Stream stream = new MemoryStream(message.data);
-            packets.Add((message.connectionId, Packet.Deserialize(stream)));
+            Packet packet = Packet.Deserialize(stream);
+            packets.Add((message.connectionId, packet));
         }
     }
 
@@ -46,11 +53,36 @@ internal static class Server
     {
         await Task.Run(() =>
         {
-            MemoryStream stream = new MemoryStream();
-            packet.Serialize(stream);
-
-            server.Send(id, stream.ToArray());
+            Send(id, packet);
         });
+    }
+
+    public static void Send(int id, Packet packet)
+    {
+        MemoryStream stream = new MemoryStream();
+        packet.Serialize(stream);
+
+        server.Send(id, stream.ToArray());
+    }
+
+    public static void SendAll(Packet packet)
+    {
+        SendAllExcept(-1, packet);
+    }
+
+    public static void SendAllExcept(int except, Packet packet)
+    {
+        MemoryStream stream = new MemoryStream();
+        packet.Serialize(stream);
+        var data = stream.ToArray();
+
+        foreach (var connection in Connections)
+        {
+            if (connection == except)
+                continue;
+
+            server.Send(connection, data);
+        }
     }
     
     public static IEnumerable<(int, T)> Receive<T>() where T : Packet

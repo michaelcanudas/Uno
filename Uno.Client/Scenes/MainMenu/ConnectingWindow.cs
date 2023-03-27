@@ -17,6 +17,8 @@ internal class ConnectingWindow : MenuWindow
 
     public override ImGuiWindowFlags WindowFlags => ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoResize;
 
+    private Task<bool> connectTask;
+
     public ConnectingWindow(string address, int port)
     {
         this.address = address;
@@ -27,19 +29,10 @@ internal class ConnectingWindow : MenuWindow
 
     private void Connect()
     {
-        Client.StartAsync(address, port).ContinueWith((t) =>
-        {
-            if (t.IsFaulted)
-            {
-                MenuScene.windows.Pop();
-                MenuScene.errmsg = "WHAT THE HEK... no connect :(";
-            }
-            else
-            {
-                Client.SendAsync(new TextPacket("Hello from the client!"));
-                UnoGame.Current.SwitchScenes(new GameplayScene());
-            }
-        });
+        // i changed this to switch the scene on the main thread so the menu switch doesn't swap mid frame
+        // this is ok for scenes, since is SwitchScene() queues a scene and does the switch after the frame,
+        // but not okay for menus, which just push right to the stack.
+        Client.Start(address, port);
     }
 
     public override void Layout()
@@ -58,6 +51,26 @@ internal class ConnectingWindow : MenuWindow
         {
             // this.Cancel() ?
             MenuScene.windows.Pop();
+        }
+
+        // we do this from the main thread now :)
+
+        // if client has stopped trying to connect we should handle it
+        if (!Client.IsConnecting)
+        {
+            if (Client.IsConnected)
+            {
+                // we sucessfully connected
+                Client.Send(new TextPacket("Hello from the client!"));
+                MenuScene.windows.Pop(); // pop this window
+                MenuScene.windows.Push(new NameSelectMenu()); // push lobby window
+            }
+            else
+            {
+                // failure :(
+                MenuScene!.windows.Pop();
+                MenuScene.errmsg = "WHAT THE HEK... no connect :(";
+            }
         }
     }
 }

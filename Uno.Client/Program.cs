@@ -1,4 +1,5 @@
 ﻿using SimulationFramework;
+using SimulationFramework.Desktop;
 using SimulationFramework.Drawing;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,6 @@ internal static class Program
 {
     private static void Main()
     {
-        new UnoGame(new MainMenuScene()).Run();
+        new UnoGame(new MainMenuScene()).RunDesktop();
     }
 }

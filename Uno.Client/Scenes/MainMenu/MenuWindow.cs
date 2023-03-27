@@ -13,12 +13,12 @@ internal abstract class MenuWindow
     public MainMenuScene? MenuScene => UnoGame.Current.ActiveScene as MainMenuScene;
 
     public virtual ImGuiWindowFlags WindowFlags => ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysAutoResize;
-    public abstract string Title { get; }
+    public virtual string Title { get; }
 
     public virtual void Layout()
     {
         ImGui.SetNextWindowPos(new(Graphics.GetOutputCanvas().Width / 2, Graphics.GetOutputCanvas().Height / 2), ImGuiCond.Always, new(.5f));
-        if (ImGui.Begin(Title, WindowFlags))
+        if (ImGui.Begin(Title ?? string.Empty, WindowFlags))
         {
             LayoutContent();
         }

@@ -2,10 +2,13 @@
 
 namespace Uno.Client;
 
-internal class Client
+internal static class Client
 {
     private static Telepathy.Client client;
     private static List<Packet> packets;
+
+    public static bool IsConnected => client.Connected;
+    public static bool IsConnecting => client.Connecting;
 
     static Client()
     {
@@ -13,13 +16,9 @@ internal class Client
         packets = new();
     }
 
-    public static async Task StartAsync(string ip, int port)
+    public static void Start(string ip, int port)
     {
-        await Task.Run(() =>
-        {
-            client.Connect(ip, port);
-            while (!client.Connected) { }
-        });
+        client.Connect(ip, port);
     }
 
     public static void Tick()
@@ -34,7 +33,10 @@ internal class Client
             }
 
             Stream stream = new MemoryStream(message.data);
-            packets.Add(Packet.Deserialize(stream));
+
+            var packet = Packet.Deserialize(stream);
+            packets.Add(packet);
+            Console.WriteLine("Received packet: " + packet.ToString());
         }
     }
 
@@ -49,8 +51,20 @@ internal class Client
         });
     }
 
-    public static IEnumerable<Packet> Receive<T>() where T : Packet
+    public static void Send(Packet packet)
+    {
+        using MemoryStream stream = new();
+        packet.Serialize(stream);
+        client.Send(stream.GetBuffer());
+    }
+
+    public static IEnumerable<T> Receive<T>() where T : Packet
     {
         return packets.OfType<T>();
+    }
+
+    public static void Disconnect()
+    {
+        client.Disconnect();
     }
 }

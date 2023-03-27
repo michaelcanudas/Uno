@@ -73,35 +73,50 @@ public abstract class Packet
 
         static void SerializeFields(BinaryWriter writer, object obj)
         {
-            Type writerType = typeof(BinaryWriter);
-
             const BindingFlags AllFields = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
             FieldInfo[] fields = obj.GetType().GetFields(AllFields);
             
             foreach (var field in fields)
             {
-                Type fieldType = field.FieldType;
                 object value = field.GetValue(obj) ?? throw new($"Cannot serialize null value in field: {field}");
-
-                // if the field is an enum we use its base type
-                fieldType = fieldType.IsEnum ? fieldType.UnderlyingSystemType : fieldType;
-
-                MethodInfo? writerMethod = writerType.GetMethod(nameof(BinaryWriter.Write), new[] { fieldType });
-
-                if (writerMethod is not null)
-                {
-                    writerMethod.Invoke(writer, new[] { value });
-                    continue;
-                }
-
-                if (fieldType.IsValueType)
-                {
-                    SerializeFields(writer, value);
-                    continue;
-                }
-
-                throw new($"Invalid packet field '{field}': Packet fields may only be primitives, strings, enums, or a structs of those types.");
+                SerializeObject(writer, value);
             }
+        }
+
+        static void SerializeObject(BinaryWriter writer, object obj)
+        {
+            Type objectType = obj.GetType();
+
+            // if the field is an enum we use its base type
+            objectType = objectType.IsEnum ? objectType.UnderlyingSystemType : objectType;
+
+            MethodInfo? writerMethod = typeof(BinaryWriter).GetMethod(nameof(BinaryWriter.Write), new[] { objectType });
+
+            if (writerMethod is not null)
+            {
+                writerMethod.Invoke(writer, new[] { obj });
+                return;
+            }
+
+            if (objectType.IsValueType)
+            {
+                SerializeFields(writer, obj);
+                return;
+            }
+
+            if (objectType.IsArray)
+            {
+                var array = (Array)obj;
+                writer.Write(array.Length);
+                for (int i = 0; i < array.Length; i++)
+                {
+                    SerializeObject(writer, array.GetValue(i) ?? throw new Exception("Arrays cannot have null elements!"));
+                }
+
+                return;
+            }
+
+            throw new($"Invalid packet member of type {obj}': Packet members may only be primitives, strings, enums, or a structs of those types.");
         }
     }
 
@@ -119,27 +134,46 @@ public abstract class Packet
 
             foreach (var field in fields)
             {
-                Type fieldType = field.FieldType;
-
-                // if the field is an enum we use its base type
-                fieldType = fieldType.IsEnum ? fieldType.UnderlyingSystemType : fieldType;
-
-                MethodInfo? readerMethod = readerType.GetMethod("Read" + fieldType.Name);
-
-                if (readerMethod is not null)
-                {
-                    field.SetValue(obj, readerMethod.Invoke(reader, Array.Empty<Type>()));
-                    continue;
-                }
-
-                if (fieldType.IsValueType)
-                {
-                    DeserializeFields(reader, Activator.CreateInstance(fieldType)!);
-                    continue;
-                }
-
-                throw new($"Invalid packet field '{field}': Packet fields may only be primitives, strings, enums, or a structs of those types.");
+                field.SetValue(obj, DeserializeObject(reader, field.FieldType));
             }
+        }
+
+        static object DeserializeObject(BinaryReader reader, Type type)
+        {
+            Type readerType = typeof(BinaryReader);
+            
+            // if the field is an enum we use its base type
+            type = type.IsEnum ? type.UnderlyingSystemType : type;
+
+            MethodInfo? readerMethod = readerType.GetMethod("Read" + type.Name);
+
+            if (readerMethod is not null)
+            {
+                return readerMethod.Invoke(reader, Array.Empty<Type>())!;
+            }
+
+            if (type.IsValueType)
+            {
+                var obj = Activator.CreateInstance(type)!;
+                DeserializeFields(reader, obj);
+                return obj;
+            }
+
+            if (type.IsArray)
+            {
+                var length = reader.ReadInt32();
+                var array = Array.CreateInstance(type.GetElementType()!, length);
+
+                for (int i = 0; i < length; i++)
+                {
+                    var element = DeserializeObject(reader, type.GetElementType()!);
+                    array.SetValue(element, i);
+                }
+
+                return array;
+            }
+
+            throw new($"Invalid packet member type '{type}': Packet members may only be primitives, strings, enums, or a structs of those types.");
         }
     }
 }

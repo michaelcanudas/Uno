@@ -3,24 +3,28 @@ using Uno.Packets;
 
 namespace Uno.Server;
 
-internal static class Server
+public static class Server
 {
     private static Telepathy.Server server;
     private static List<(int id, Packet packet)> packets;
-    
-    public static HashSet<int> Connections { get; }
+    public static bool IsRunning { get; private set; }
+    public static int Port { get; private set; }
+
+    public static HashSet<int> Connections { get; private set; }
 
     static Server()
     {
-        server = new();
-        packets = new();
-
-        Connections = new();
     }
     
     public static void Start(int port)
     {
+        server = new();
+        packets = new();
+        Connections = new();
+
         server.Start(port);
+        IsRunning = true;
+        Port = port;
     }
 
     public static void Tick()
@@ -88,5 +92,15 @@ internal static class Server
     public static IEnumerable<(int, T)> Receive<T>() where T : Packet
     {
         return packets.Where(data => data.packet is T).Select(data => (data.id, (data.packet as T)!));
+    }
+
+    public static void Stop()
+    {
+        IsRunning = false;
+    }
+
+    public static void Destroy()
+    {
+        server.Stop();
     }
 }

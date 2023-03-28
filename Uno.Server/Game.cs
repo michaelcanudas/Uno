@@ -2,7 +2,7 @@
 
 namespace Uno.Server;
 
-internal static class Game
+public static class Game
 {
     private static State state;
     private static List<Player> players;

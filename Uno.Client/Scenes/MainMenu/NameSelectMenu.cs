@@ -22,31 +22,26 @@ internal class NameSelectMenu : MenuWindow
     string? error;
     string? info;
 
+    public NameSelectMenu()
+    {
+        try
+        {
+            currentInput = File.ReadAllText(NameCacheFile);
+        }
+        catch
+        {
+            currentInput = "";
+        }
+    }
+
     protected override void LayoutContent()
     {
         const ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags.EnterReturnsTrue;
 
         ImGui.Text("Enter Name:");
         bool hitEnter = ImGui.InputText("##input text box", ref currentInput, 32, inputTextFlags);
-        ImGui.SameLine();
-        bool button = ImGui.Button("Ok");
 
-        if ((hitEnter || button) && !isJoining)
-        {
-            if (currentInput != string.Empty && currentInput.All(char.IsLetterOrDigit))
-            {
-                // try to enter game
-                Client.Send(new EnterAsPlayerPacket() { Name = currentInput });
-                isJoining = true;
-                isJoiningAsSpectator = false;
-                sentName = currentInput;
-            }
-            else
-            {
-                error = "Invalid Name";
-            }
-        }
-
+        ImGui.Separator();
         if (ImGui.Button("Cancel"))
         {
             Client.Disconnect();
@@ -60,6 +55,28 @@ internal class NameSelectMenu : MenuWindow
             Client.Send(new EnterAsSpectatorPacket());
             isJoiningAsSpectator = isJoining = true;
         }
+
+        ImGui.SameLine();
+        if ((ImGui.Button("Join") || hitEnter) && !isJoining)
+        {
+            currentInput = currentInput.Trim();
+
+            if (currentInput != string.Empty && currentInput.All(char.IsLetterOrDigit))
+            {
+                // try to enter game
+                Client.Send(new EnterAsPlayerPacket() { Name = currentInput });
+                isJoining = true;
+                isJoiningAsSpectator = false;
+                sentName = currentInput;
+
+                File.WriteAllText(NameCacheFile, currentInput);
+            }
+            else
+            {
+                error = "Invalid Name";
+            }
+        }
+
 
         currentInput = string.Concat(currentInput.Where(c => char.IsLetterOrDigit(c)));
 

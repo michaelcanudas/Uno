@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Uno.Common\Uno.Common.csproj" />
+    <ProjectReference Include="..\Uno.Server\Uno.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>

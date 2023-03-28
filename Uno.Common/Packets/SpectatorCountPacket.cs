@@ -5,6 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Uno.Packets;
+
+/// <summary>
+/// Server broadcasts this to all clients when the number of spectators changes.
+/// </summary>
 public class SpectatorCountPacket : Packet
 {
     public SpectatorCountPacket()

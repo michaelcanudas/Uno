@@ -1,15 +1,19 @@
 ﻿namespace Uno.Server;
 
-internal static class Program
+public static class Program
 {
-    private static void Main(string[] args)
+    public static void Main(string[] args)
     {
-        Server.Start(12345);
+        int port = args.Length > 0 && !string.IsNullOrEmpty(args[0]) ? int.Parse(args[0]) : 12345;
 
-        while (true)
+        Server.Start(port);
+
+        while (Server.IsRunning)
         {
             Server.Tick();
             Game.Tick();
         }
+
+        Server.Destroy();
     }
 }

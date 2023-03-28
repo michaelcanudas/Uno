@@ -6,11 +6,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Telepathy;
+using Uno.Server;
 
 namespace Uno.Client;
 internal class UnoGame : Simulation
 {
     public static UnoGame Current { get; private set; }
+
+    public Thread? ServerThread { get; set; }
 
     GameScene activeScene;
     GameScene? nextScene;

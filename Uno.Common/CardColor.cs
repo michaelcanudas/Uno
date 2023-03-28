@@ -12,5 +12,5 @@ public enum CardColor
     Blue,
     Green,
     Yellow,
-    Neutral,
+    Neutral, // for wilds and the backface
 }

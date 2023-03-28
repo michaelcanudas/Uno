@@ -25,8 +25,7 @@ internal class MainMenuScene : GameScene
     public override void Update()
     {
         windows.Peek().Layout();
-
-
+        
         base.Update();
     }
 

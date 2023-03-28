@@ -17,6 +17,7 @@ internal class CardRenderer
 
     public const float CardWidth = 70;
     public const float CardHeight = 106;
+    public const float CardAspectRatio = CardWidth / CardHeight;
 
     public CardRenderer()
     {
@@ -36,7 +37,7 @@ internal class CardRenderer
         }
     }
 
-    public Rectangle GetCardBounds(CardFace card)
+    private Rectangle GetCardBounds(CardFace card)
     {
         const float cardSeparationX = 3;
         const float cardSeparationY = 10;
@@ -61,7 +62,6 @@ internal class CardRenderer
         if (card.Color is CardColor.Neutral)
         {
             // draw card backface
-
             return new(5, 21, CardWidth, CardHeight);
         }
 
@@ -76,8 +76,8 @@ internal class CardRenderer
         canvas.DrawTexture(cardSpriteSheet, GetCardBounds(card), destination);
     }
 
-    public void DrawCard(ICanvas canvas, CardFace card, Vector2 position, Alignment alignment = Alignment.TopLeft)
+    public void DrawCard(ICanvas canvas, CardFace card, Vector2 position, float scale = 1f, Alignment alignment = Alignment.TopLeft)
     {
-        canvas.DrawTexture(cardSpriteSheet, GetCardBounds(card), new(position, new(CardWidth, CardHeight), alignment));
+        canvas.DrawTexture(cardSpriteSheet, GetCardBounds(card), new(position, new(scale * (CardWidth/CardHeight), scale), alignment));
     }
 }

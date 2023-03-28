@@ -19,6 +19,7 @@ internal class UnoGame : Simulation
     GameScene activeScene;
     GameScene? nextScene;
 
+
     public GameScene ActiveScene => activeScene;
 
     public CardRenderer CardRenderer { get; private set; }

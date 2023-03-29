@@ -25,10 +25,5 @@ internal class GameplayScene : GameScene
     {
         base.Update();
         Client.Tick();
-
-        foreach (TextPacket packet in Client.Receive<TextPacket>())
-        {
-            Console.WriteLine(packet.Text);
-        }
     }
 }

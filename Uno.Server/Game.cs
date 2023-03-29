@@ -99,11 +99,6 @@ public static class Game
 
             Console.WriteLine($"Disconnect from: {id}");
         }
-
-        foreach (var (id, packet) in Server.Receive<TextPacket>())
-        {
-            Console.WriteLine($"{id}: {packet.Text}");
-        }
     }
 
     private static void HandleConditions()

@@ -7,15 +7,12 @@ public static class Server
 {
     private static Telepathy.Server server;
     private static List<(int id, Packet packet)> packets;
+    
     public static bool IsRunning { get; private set; }
     public static int Port { get; private set; }
 
     public static HashSet<int> Connections { get; private set; }
 
-    static Server()
-    {
-    }
-    
     public static void Start(int port)
     {
         server = new();

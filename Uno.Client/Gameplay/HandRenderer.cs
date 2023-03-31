@@ -2,133 +2,149 @@
 using SimulationFramework.Drawing;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Uno.Client.Gameplay;
 internal class PlayerHand
 {
-    public List<CardFace> Cards { get; set; }
+    public List<InteractableCard> Cards { get; set; }
+    public Vector2 Position { get; set; }
 
-    public PlayerHand()
+    public PlayerHand(IEnumerable<InteractableCard> cards)
     {
-        this.Cards = new();
+        this.Cards = new(cards);
     }
 
-    float offset = .025f;
-    float radius = .125f;
+    float offset = .4f;
+    float radius = 2f;
     float breadthStrength = 1.05f;
-    float breadthUpper = MathHelper.DegreesToRadians(90f);
-    float breadthLower = MathHelper.DegreesToRadians(10f);
-    int cards = 7;
-    float selection = 4f;
-    float selectStrength = 0.07f;
-    public CardFace selectedCard;
+    float breadthUpper = Angle.ToRadians(90f);
+    float breadthLower = Angle.ToRadians(10f);
+
+    public event Action<InteractableCard>? OnCardSelected;
 
     public void Render(ICanvas canvas, bool frontFacing)
     {
-        Cards.Clear();
-        Cards.AddRange(Enumerable.Range(0, cards).Select(i => CardFace.Random(new Random(i))));
-        canvas.Scale(5f);
-        UnoGame.Current.CardRenderer.DrawCard(canvas, selectedCard, -.125f * Vector2.UnitY, 0.05f, Alignment.Center);
+        //UnoGame.Current.CardRenderer.DrawCard(canvas, selectedCard, -2 * Vector2.UnitY, 1, Alignment.Center);
 
-        Matrix3x2.Invert(canvas.State.Transform, out Matrix3x2 camMatrix);
-        Vector2 mousePos = Vector2.Transform(Mouse.Position, camMatrix);
+        //Matrix3x2.Invert(canvas.State.Transform, out Matrix3x2 camMatrix);
+        //Vector2 mousePos = Vector2.Transform(Mouse.Position, camMatrix);
 
-        Vector2 dir = mousePos - new Vector2(0, radius - offset);
-        float mouseAngle = MathF.Atan2(dir.Y, dir.X);
-        mouseAngle = MathHelper.NormalizeRadians(mouseAngle);
-        float mouseDist = dir.Length();
-        var selectFalloff = Sigmoid(-100 * (mouseDist - .2f));
+        //Vector2 dir = mousePos - new Vector2(0, radius - offset);
+        //float mouseAngle = MathF.Atan2(dir.Y, dir.X);
+        //mouseAngle = MathHelper.NormalizeRadians(mouseAngle);
+        //float mouseDist = dir.Length();
 
-        ImGui.Text(selectFalloff.ToString());
-        canvas.Stroke(Color.Purple);
+        //canvas.Stroke(Color.Purple);
 
-        ImGui.DragInt("cards", ref cards, 1, 0, int.MaxValue);
-        ImGui.DragFloat("selected", ref selection, 1);
-        ImGui.DragFloat("select str", ref selectStrength, 0.01f);
+        //float maxAngle = baseAngle + breadth;
+        //mouseAngle += MathHelper.DegreesToRadians(5f);
 
-        float breadth = breadthUpper - (breadthUpper - breadthLower) / MathF.Pow(breadthStrength, (cards-2));
-        float increment = breadth / Cards.Count;
-        float baseAngle = (increment-breadth) / 2f;
-        mouseAngle += MathHelper.DegreesToRadians(5f);
+        //float selectionFac = (MathHelper.NormalizeRadians(mouseAngle) - MathHelper.NormalizeRadians(baseAngle - MathF.PI / 2)) / breadth;
+        //selection = MathHelper.Lerp(0, Cards.Count - 1, selectionFac);
 
-        selection = MathHelper.Lerp(0, Cards.Count - 1, (MathHelper.NormalizeRadians(mouseAngle) - MathHelper.NormalizeRadians(baseAngle-MathF.PI/2)) / breadth);
+        //var selectFalloff = Sigmoid(-50 * (mouseDist - (3.65f / 5f)));
 
-        for (int i = 0; i < Cards.Count; i++)
+        //for (int i = 0; i < Cards.Count; i++)
+        //{
+        //    var card = Cards[i];
+
+        //    canvas.PushState();
+
+        //    // x is distance to selected card pos (fractional)
+        //    float x = i - selection;
+
+        //    // calculate upwards bump
+        //    float bump = 1f / (4 * x * x + 1);
+
+        //    canvas.Translate(0, radius - offset);
+        //    canvas.Rotate(baseAngle + i * increment);
+
+        //    // calcuate offset to make room for selected card
+        //    // just a sigmoid remapped to [-1, 1]
+        //    x = Sigmoid(10 * (x - .5f)) * 2 - 1;
+
+        //    canvas.Rotate(x * selectStrength * selectFalloff);
+        //    canvas.Translate(0, -(radius + bump * .02f));
+
+        //    UnoGame.Current.CardRenderer.DrawCard(canvas, card.Face, Vector2.Zero, 1, Alignment.BottomCenter);
+
+        //    canvas.PopState();
+        //}
+
+        foreach (var card in Cards)
         {
-            var card = Cards[i];
-            
-            canvas.PushState();
-
-            // x is distance to selected card pos (fractional)
-            float x = i - selection;
-
-            // calculate upwards bump
-            float bump = 1f / (4 * x * x + 1);
-
-            canvas.Translate(0, radius - offset);
-            canvas.Rotate(baseAngle + i * increment);
-
-            // calcuate offset to make room for selected card
-            // just a sigmoid remapped to [-1, 1]
-            x = Sigmoid(10 * (x-.5f)) * 2 - 1;
-
-            canvas.Rotate(x * selectStrength * selectFalloff);
-            canvas.Translate(0, -(radius + bump * .005f));
-
-            UnoGame.Current.CardRenderer.DrawCard(canvas, card, Vector2.Zero, .05f, Alignment.BottomCenter);
-
-            Matrix3x2.Invert(canvas.State.Transform, out var mat);
-            Rectangle cardRect = new(Vector2.Zero, new Vector2(.05f * CardRenderer.CardAspectRatio, .05f), Alignment.BottomCenter);
-            Vector2 mp = Vector2.Transform(Mouse.Position, mat);
-            if (cardRect.ContainsPoint(mp))
-            {
-                canvas.Stroke(Color.White);
-                canvas.StrokeWidth(.001f);
-                canvas.DrawRect(cardRect);
-
-                if (Mouse.IsButtonDown(MouseButton.Left))
-                {
-                    selectedCard = card;
-                }
-            }
-
-            canvas.PopState();
+            card.Render(canvas);
         }
-    }
 
-    static float Sigmoid(float x)
-    {
-        return 1f / (1f + MathF.Pow(MathF.E, -x)); 
+        canvas.Stroke(Color.Purple);
+        canvas.DrawCircle(Position.X, Position.Y-offset+radius, radius);
     }
 
     public void Update()
     {
+        float breadth = breadthUpper - (breadthUpper - breadthLower) / MathF.Pow(breadthStrength, (Cards.Count - 2));
+        float increment = breadth / Cards.Count;
+        float baseAngle = (increment - breadth) / 2f - (MathF.PI / 2f);
 
-    }
+        var mousePosition = Camera.Active.ScreenToWorld(Mouse.Position);
+        var selectedCard = GetCard(mousePosition);
+        var selectedCardIndex = selectedCard is null ? -1 : Cards.IndexOf(selectedCard);
 
-    private void DoCollisions()
-    {
-        for (int i = Cards.Count; i >= 0; i--)
+        for (int i = 0; i < Cards.Count; i++)
         {
+            var card = Cards[i];
 
+            float angle = baseAngle + i * increment;
+            
+            if (selectedCardIndex is not -1 && selectedCardIndex != (Cards.Count - 1))
+            {
+                float diff = (increment / -2f) + Angle.ToRadians(12.5f / radius);
+
+                if (i <= selectedCardIndex)
+                {
+                    angle -= diff;
+                }
+                else
+                {
+                    angle += diff;
+                }
+            }
+
+            card.TargetPosition = Position + Vector2.UnitY * (radius - offset) + Angle.ToVector(angle) * radius;
+            card.TargetRotation = angle + (MathF.PI/2f);
+
+            if (card == selectedCard)
+            {
+                card.TargetPosition += Angle.ToVector(angle) * .15f;
+            }
+
+            card.Update();
+        }
+
+        if (selectedCard is not null && Mouse.IsButtonPressed(MouseButton.Left))
+        {
+            this.OnCardSelected?.Invoke(selectedCard);
         }
     }
 
-    // creates a world space -> card space matrix for the card at a given index
-    private Matrix3x2 GetCardMatrix(int card)
+    public InteractableCard? GetCard(Vector2 worldSpacePoint)
     {
-        return Matrix3x2.Identity;
-    }
-}
+        // cards are stored left to right, and a card is always on top of the card to its left.
+        // we can assume that if we test the cards in reverse order, the first success will be the topmost card.
 
-static class CanvasEx
-{
-    public static void DrawVector(this ICanvas canvas, Vector2 vector, Vector2 position = default)
-    {
-        canvas.DrawLine(position, position + vector);
+        for (int i = Cards.Count - 1; i >= 0; i--)
+        {
+            if (Cards[i].ContainsPoint(worldSpacePoint) ||
+                Cards[i].ContainsPoint(worldSpacePoint, Vector2.UnitY * -.5f))
+                return Cards[i];
+        }
+
+        return null;
     }
 }

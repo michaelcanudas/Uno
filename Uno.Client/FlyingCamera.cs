@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Uno.Client;
 internal class FlyingCamera : Camera
 {
-    public float Speed { get; set; }
+    public float Speed { get; set; } = 1f;
     public float Zoom { get => MathF.Log(Scale, 1.1f); set => Scale = MathF.Pow(1.1f, value); }
 
     public FlyingCamera(float height) : base(height)
@@ -27,8 +27,8 @@ internal class FlyingCamera : Camera
         if (Keyboard.IsKeyDown(Key.D))
             delta -= Vector2.UnitX;
 
-        Position += delta * Time.DeltaTime * Speed;
-        Zoom += Mouse.ScrollWheelDelta;
+        Position -= delta * Time.DeltaTime * Speed;
+        Zoom -= Mouse.ScrollWheelDelta;
 
         base.Update();
     }

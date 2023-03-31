@@ -19,7 +19,7 @@ internal static class Program
 
         // IMPORTANT: COMMENT THIS OUT IF YOU ARENT ME TESTING RENDERING
         // scene = new RendererDemoScene();
-
+        
         var game = new UnoGame(scene);
         game.RunDesktop();
     }

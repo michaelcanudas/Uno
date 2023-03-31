@@ -30,8 +30,19 @@ public record struct CardFace(CardKind Kind, CardColor Color)
 
         random ??= System.Random.Shared;
 
-        CardKind kind = (CardKind)random.Next(0, 15);
-        CardColor color = (CardColor)random.Next(0, kind is CardKind.Wild or CardKind.WildDraw4 ? 5 : 4);
+        int kindValue = random.Next(0, (13 * 4) + 2); // first 13 kinds should have 4x the weight of the wild cards
+        CardKind kind;
+
+        if (kindValue < 13 * 4)
+        {
+            kind = (CardKind)(kindValue / 4);
+        }
+        else
+        {
+            kind = (CardKind)(kindValue - (13 * 3));
+        }
+
+        CardColor color = kind is CardKind.Wild or CardKind.WildDraw4 ? CardColor.Neutral : (CardColor)random.Next(0, 4);
 
         return new(kind, color);
     }

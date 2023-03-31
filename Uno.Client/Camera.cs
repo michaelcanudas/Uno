@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 namespace Uno.Client;
 internal class Camera
 {
+    public static Camera Active { get; private set; }
+
     public Vector2 Position { get; set; }
 
     public float Width { get => Height * AspectRatio; set => Height = value / AspectRatio; }
@@ -24,6 +26,11 @@ internal class Camera
     public Camera(float height)
     {
         this.Height = height;
+    }
+
+    public void SetActive()
+    {
+        Active = this;
     }
 
     public virtual void Update()

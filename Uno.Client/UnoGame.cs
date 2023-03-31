@@ -116,10 +116,14 @@ internal class UnoGame : Simulation
 
         // in all seriousness move this whenever cause
         // like idk where u planned on putting this stuff
-        foreach (var packet in Client.Receive<StartPacket>())
-        {
-            SwitchScenes(new RendererDemoScene());
-        }
+        //foreach (var packet in Client.Receive<StartPacket>())
+        //{
+        //    SwitchScenes(new RendererDemoScene());
+        //}
+
+        // i commented it out :)
+        // btw, the proper place to handle this is in LobbyMenu
+        // each menu/scene does the transition the next one itself
 
         foreach (var packet in Client.Receive<StopPacket>())
         {

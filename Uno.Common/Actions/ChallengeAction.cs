@@ -4,10 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Uno;
-
-// card face + state
-public class Card
+namespace Uno.Actions;
+internal class ChallengeAction
 {
-    public CardFace Face { get; set; }
 }

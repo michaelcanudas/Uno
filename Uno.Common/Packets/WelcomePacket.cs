@@ -16,9 +16,10 @@ public class WelcomePacket : Packet
 
     }
 
-    public WelcomePacket(bool success, string[] players, int spectators)
+    public WelcomePacket(bool success, bool elevated, string[] players, int spectators)
     {
         this.Success = success;
+        this.Elevated = elevated;
         this.Players = players;
         this.spectators = spectators;
     }
@@ -29,11 +30,16 @@ public class WelcomePacket : Packet
     public bool Success;
 
     /// <summary>
-    /// The players currently in the lobby, excluding the receiving client. Will be empty if Sucess is <see langword="false"/>.
+    /// Whether the player has elevated permissions (kick players, start the game). usually the first one in the lobby (we could add a configurable whitelist).
+    /// </summary>
+    public bool Elevated;
+
+    /// <summary>
+    /// The players currently in the lobby, including the receiving client. Will be empty if Sucess is <see langword="false"/>.
     /// </summary>
     public string[] Players;
     /// <summary>
-    /// The number of spectators currently in the lobby, excluding the receiving client. Will be zero if <see cref="Success"/> is <see langword="false"/>.
+    /// The number of spectators currently in the lobby, including the receiving client. Will be zero if <see cref="Success"/> is <see langword="false"/>.
     /// </summary>
     public int spectators;
 }

@@ -1,4 +1,5 @@
-﻿using Telepathy;
+﻿using System.Diagnostics.CodeAnalysis;
+using Telepathy;
 using Uno.Packets;
 
 namespace Uno.Server;
@@ -81,6 +82,12 @@ public static class Server
     public static IEnumerable<(int, T)> Receive<T>() where T : Packet
     {
         return packets.Where(data => data.packet is T).Select(data => (data.id, (data.packet as T)!));
+    }
+
+    public static bool Receive<T>([NotNullWhen(true)] out int connection, [NotNullWhen(true)] out T? packet) where T : Packet
+    {
+        (connection, packet) = Receive<T>().FirstOrDefault();
+        return packet is not null;
     }
 
     public static void Kick(int id)

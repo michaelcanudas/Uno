@@ -9,7 +9,7 @@ using Uno.Client.MainMenu;
 using Uno.Packets;
 
 namespace Uno.Client.MainMenu;
-internal class ConnectingWindow : MenuWindsow
+internal class ConnectingWindow : MenuWindow
 {
     private string address;
     private int port;

@@ -7,6 +7,7 @@ public static class Game
     private static State state;
     private static List<Player> players;
     private static HashSet<int> spectators;
+    private static int elevatedConnection;
 
     private const int MIN_PLAYERS = 2;
     private const int MAX_PLAYERS = 10;
@@ -68,14 +69,15 @@ public static class Game
 
     private static void HandleConditions()
     {
-        if (players.Count >= MIN_PLAYERS && state == State.Waiting)
-        {
-            state = State.Playing;
-
-            Server.SendAll(new StartPacket());
-
-            Console.WriteLine("Game started");
-        }
+        // commented out cause i think i added a start button :D
+        // if (players.Count >= MIN_PLAYERS && state == State.Waiting)
+        // {
+        //     state = State.Playing;
+        // 
+        //     Server.SendAll(new StartPacket());
+        // 
+        //     Console.WriteLine("Game started");
+        // }
 
         if (players.Count < MIN_PLAYERS && state == State.Playing)
         {
@@ -97,11 +99,23 @@ public static class Game
             valid &= !(players.Count() >= MAX_PLAYERS);
 
             if (!valid)
+            {
+                // send a failed welcome packet so the client doesn't softlock
+                Server.Send(id, new WelcomePacket(false, false, Array.Empty<string>(), 0));
                 continue;
+            }
+
+            // first player becomes elevated
+            bool elevated = !players.Any();
+
+            if (elevated)
+            {
+                elevatedConnection = id;
+            }
 
             players.Add(new Player(id, packet.Name));
 
-            Server.Send(id, new WelcomePacket(valid, players.Select(p => p.Name).ToArray(), spectators.Count));
+            Server.Send(id, new WelcomePacket(valid, elevated, players.Select(p => p.Name).ToArray(), spectators.Count));
             Server.SendAllExcept(id, new PlayerJoinedPacket(packet.Name));
         }
         
@@ -109,13 +123,26 @@ public static class Game
         {
             spectators.Add(id);
             
-            Server.Send(id, new WelcomePacket(true, players.Select(p => p.Name).ToArray(), spectators.Count));
+            Server.Send(id, new WelcomePacket(true, false, players.Select(p => p.Name).ToArray(), spectators.Count));
             Server.SendAll(new SpectatorCountPacket(spectators.Count));
+        }
+
+        if (Server.Receive<StartPacket>(out int connection, out _))
+        {
+            if (connection == elevatedConnection && players.Count >= MIN_PLAYERS)
+            {
+                state = State.Playing;
+                Server.SendAll(new StartPacket());
+            }
         }
     }
 
     private static void Playing()
     {
+        foreach (var (id, packet) in Server.Receive<PlayerActionPacket>())
+        {
+            Server.SendAllExcept(id, packet);
+        }
     }
 
     private static bool IsValidName(string name)

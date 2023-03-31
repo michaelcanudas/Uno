@@ -4,10 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Uno;
-
-// card face + state
-public class Card
+namespace Uno.Actions;
+public class PlayCardAction : PlayerAction
 {
-    public CardFace Face { get; set; }
 }

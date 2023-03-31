@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Uno.Client.Gameplay;
 using Uno.Packets;
 
 namespace Uno.Client.MainMenu;
@@ -12,11 +13,16 @@ internal class LobbyMenu : MenuWindow
     List<string> players;
     int selectedPlayer;
     int spectators;
+    // this needs to be passed to the gameplay scene
+    string playerName;
+    bool elevated;
 
     public override string Title => "Lobby";
 
-    public LobbyMenu(IEnumerable<string> initialPlayers, int initialSpectatorCount)
+    public LobbyMenu(string playerName, bool elevated, IEnumerable<string> initialPlayers, int initialSpectatorCount)
     {
+        this.playerName = playerName;
+        this.elevated = elevated;
         players = new(initialPlayers);
         spectators = initialSpectatorCount;
     }
@@ -47,6 +53,20 @@ internal class LobbyMenu : MenuWindow
         {
             Client.Disconnect();
             MenuScene!.windows.Pop();
+        }
+
+        if (elevated)
+        {
+            ImGui.SameLine();
+            if (ImGui.Button("Start"))
+            {
+                Client.Send(new StartPacket());
+            }
+        }
+
+        if (Client.Receive<StartPacket>(out _))
+        {
+            UnoGame.Current.SwitchScenes(new GameplayScene(playerName, this.players));
         }
     }
 }

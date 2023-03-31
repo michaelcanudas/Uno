@@ -29,7 +29,9 @@ internal class PlayerHand
     public event Action<InteractableCard>? OnCardSelected;
     public bool SelectionEnabled { get; set; }
 
-    public void Render(ICanvas canvas, bool frontFacing)
+    public InteractableCard? SelectedCard { get; private set; }
+
+    public void Render(ICanvas canvas)
     {
         foreach (var card in Cards)
         {
@@ -47,8 +49,8 @@ internal class PlayerHand
         float baseAngle = (increment - breadth) / 2f - (MathF.PI / 2f);
 
         var mousePosition = Camera.Active.ScreenToWorld(Mouse.Position);
-        var selectedCard = GetCard(mousePosition);
-        var selectedCardIndex = (selectedCard is null || (!SelectionEnabled)) ? -1 : Cards.IndexOf(selectedCard);
+        this.SelectedCard = GetCard(mousePosition);
+        var selectedCardIndex = (SelectedCard is null || (!SelectionEnabled)) ? -1 : Cards.IndexOf(SelectedCard);
 
         for (int i = 0; i < Cards.Count; i++)
         {
@@ -73,7 +75,7 @@ internal class PlayerHand
             card.TargetPosition = Position + Vector2.UnitY * (radius - offset) + Angle.ToVector(angle) * radius;
             card.TargetRotation = angle + (MathF.PI/2f);
 
-            if (SelectionEnabled && card == selectedCard)
+            if (SelectionEnabled && card == SelectedCard)
             {
                 card.TargetPosition += Angle.ToVector(angle) * .15f;
             }
@@ -81,9 +83,9 @@ internal class PlayerHand
             card.Update();
         }
 
-        if (selectedCard is not null && SelectionEnabled && Mouse.IsButtonPressed(MouseButton.Left))
+        if (SelectedCard is not null && SelectionEnabled && Mouse.IsButtonPressed(MouseButton.Left))
         {
-            this.OnCardSelected?.Invoke(selectedCard);
+            this.OnCardSelected?.Invoke(SelectedCard);
         }
     }
 

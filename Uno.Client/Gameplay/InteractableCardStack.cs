@@ -20,6 +20,7 @@ internal class InteractableCardStack
     public Vector2 Position { get; set; }
 
     public event Action? Clicked;
+    public bool IsClicked { get; private set; }
 
     public void Render(ICanvas canvas)
     {
@@ -44,7 +45,8 @@ internal class InteractableCardStack
         var mousePosition = Camera.Active.ScreenToWorld(Mouse.Position);
         var bounds = new Rectangle(Position, new(CardRenderer.CardAspectRatio, 1), Alignment.BottomCenter);
 
-        if (Mouse.IsButtonPressed(MouseButton.Left) && bounds.ContainsPoint(mousePosition))
+        IsClicked = Mouse.IsButtonPressed(MouseButton.Left) && bounds.ContainsPoint(mousePosition);
+        if (IsClicked)
         {
             Clicked?.Invoke();
         }

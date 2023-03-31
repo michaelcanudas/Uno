@@ -106,7 +106,7 @@ internal class NameSelectMenu : MenuWindow
 
                     // transition to lobby menu
                     MenuScene!.windows.Pop(); // pop this window, we don't need it and leaving should go to main menu
-                    MenuScene!.windows.Push(new LobbyMenu(players, spectators));
+                    MenuScene!.windows.Push(new LobbyMenu(sentName!, packet.Elevated, players, spectators));
                 }
                 else
                 {

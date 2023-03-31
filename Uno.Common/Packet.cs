@@ -98,12 +98,6 @@ public abstract class Packet
                 return;
             }
 
-            if (objectType.IsValueType)
-            {
-                SerializeFields(writer, obj);
-                return;
-            }
-
             if (objectType.IsArray)
             {
                 var array = (Array)obj;
@@ -116,7 +110,18 @@ public abstract class Packet
                 return;
             }
 
-            throw new($"Invalid packet member of type {obj}': Packet members may only be primitives, strings, enums, or a structs of those types.");
+            if (!objectType.IsPrimitive)
+            {
+                if (!objectType.IsValueType)
+                {
+                    writer.Write(objectType.AssemblyQualifiedName);
+                }
+                SerializeFields(writer, obj);
+                return;
+            }
+
+
+            throw new($"Invalid packet member of type {obj}'.");
         }
     }
 
@@ -152,13 +157,6 @@ public abstract class Packet
                 return readerMethod.Invoke(reader, Array.Empty<Type>())!;
             }
 
-            if (type.IsValueType)
-            {
-                var obj = Activator.CreateInstance(type)!;
-                DeserializeFields(reader, obj);
-                return obj;
-            }
-
             if (type.IsArray)
             {
                 var length = reader.ReadInt32();
@@ -173,7 +171,20 @@ public abstract class Packet
                 return array;
             }
 
-            throw new($"Invalid packet member type '{type}': Packet members may only be primitives, strings, enums, or a structs of those types.");
+            if (!type.IsPrimitive)
+            {
+                if (!type.IsValueType)
+                {
+                    var name = reader.ReadString();
+                    type = Type.GetType(name) ?? throw new("Packet had object of unknown type.");
+                }
+
+                var obj = Activator.CreateInstance(type)!;
+                DeserializeFields(reader, obj);
+                return obj;
+            }
+
+            throw new($"Invalid packet member type '{type}'.");
         }
     }
 }

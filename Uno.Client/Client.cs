@@ -1,4 +1,5 @@
-﻿using Telepathy;
+﻿using System.Diagnostics.CodeAnalysis;
+using Telepathy;
 using Uno.Packets;
 
 namespace Uno.Client;
@@ -60,6 +61,15 @@ internal static class Client
     public static IEnumerable<T> Receive<T>() where T : Packet
     {
         return packets.OfType<T>();
+    }
+
+    /// <summary>
+    /// use this for packets we should not receive multiple of (like packets that trigger scene/menu transitions)
+    /// </summary>
+    public static bool Receive<T>([NotNullWhen(true)] out T? packet) where T : Packet
+    {
+        packet = Receive<T>().FirstOrDefault();
+        return packet is not null;
     }
 
     public static void Disconnect()

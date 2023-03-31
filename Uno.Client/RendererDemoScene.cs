@@ -74,7 +74,7 @@ internal class RendererDemoScene : GameScene
 
         camera.ApplyTo(canvas);
 
-        hand.Render(canvas, true);
+        hand.Render(canvas);
         depotStack.Render(canvas);
         drawStack.Render(canvas);
 

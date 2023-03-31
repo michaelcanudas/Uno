@@ -8,6 +8,9 @@ public static class Game
     private static List<Player> players;
     private static HashSet<int> spectators;
 
+    private const int MIN_PLAYERS = 2;
+    private const int MAX_PLAYERS = 10;
+
     static Game()
     {
         state = State.Waiting;
@@ -24,60 +27,22 @@ public static class Game
         switch (state)
         {
             case State.Waiting:
-                foreach (var (id, packet) in Server.Receive<EnterAsPlayerPacket>())
-                {
-                    // a new player is joining
-                    bool valid = IsValidName(packet.Name);
-
-                    valid &= !players.Any(p => p.Name == packet.Name);
-
-                    Server.Send(id, new WelcomePacket(valid, players.Select(p => p.Name).ToArray(), spectators.Count));
-
-                    if (!valid)
-                        continue;
-
-                    // register as a player
-                    players.Add(new Player(id, packet.Name));
-
-                    // tell every other player
-                    foreach(var connection in Server.Connections)
-                    {
-                        if (connection == id)
-                            continue;
-
-                        Server.Send(connection, new PlayerJoinedPacket(packet.Name));
-                    }
-                }
-                foreach (var (id, packet) in Server.Receive<EnterAsSpectatorPacket>())
-                {
-                    // a new spectator is joining
-                    // no need for any kind of verification for spectators as of now
-                    Console.WriteLine(spectators.Count);
-
-                    Server.Send(id, new WelcomePacket(true, players.Select(p => p.Name).ToArray(), spectators.Count));
-                    spectators.Add(id);
-
-                    Server.SendAll(new SpectatorCountPacket(spectators.Count));
-                }
+                Waiting();
                 break;
             case State.Playing:
+                Playing();
                 break;
         }
-    }
-
-    private static bool IsValidName(string name)
-    {
-        return name.All(char.IsLetterOrDigit);
     }
 
     private static void HandleConnections()
     {
-        foreach ((int id, ConnectPacket packet) in Server.Receive<ConnectPacket>())
+        foreach (var (id, packet) in Server.Receive<ConnectPacket>())
         {
             Console.WriteLine($"Connection from: {id}");
         }
 
-        foreach ((int id, DisconnectPacket packet) in Server.Receive<DisconnectPacket>())
+        foreach (var (id, packet) in Server.Receive<DisconnectPacket>())
         {
             // try to find a player for the disconnected id. there may not be one (ie was on name select screen)
             var disconnectedPlayer = players.SingleOrDefault(p => p.Connection == id);
@@ -103,27 +68,59 @@ public static class Game
 
     private static void HandleConditions()
     {
-        if (players.Count >= 2 && state == State.Waiting)
+        if (players.Count >= MIN_PLAYERS && state == State.Waiting)
         {
             state = State.Playing;
-            foreach (Player player in players)
-            {
-                Server.SendAsync(player.Connection, new StartPacket());
-            }
+
+            Server.SendAll(new StartPacket());
 
             Console.WriteLine("Game started");
         }
 
-        if (players.Count < 2 && state == State.Playing)
+        if (players.Count < MIN_PLAYERS && state == State.Playing)
         {
             state = State.Waiting;
-            foreach (Player player in players)
-            {
-                Server.SendAsync(player.Connection, new StopPacket());
-            }
+
+            Server.SendAll(new StopPacket());
+            Server.KickAll();
 
             Console.WriteLine("Game stopped");
         }
+    }
+
+    private static void Waiting()
+    {
+        foreach (var (id, packet) in Server.Receive<EnterAsPlayerPacket>())
+        {
+            bool valid = IsValidName(packet.Name);
+            valid &= !players.Any(p => p.Name == packet.Name);
+            valid &= !(players.Count() >= MAX_PLAYERS);
+
+            if (!valid)
+                continue;
+
+            players.Add(new Player(id, packet.Name));
+
+            Server.Send(id, new WelcomePacket(valid, players.Select(p => p.Name).ToArray(), spectators.Count));
+            Server.SendAllExcept(id, new PlayerJoinedPacket(packet.Name));
+        }
+        
+        foreach (var (id, packet) in Server.Receive<EnterAsSpectatorPacket>())
+        {
+            spectators.Add(id);
+            
+            Server.Send(id, new WelcomePacket(true, players.Select(p => p.Name).ToArray(), spectators.Count));
+            Server.SendAll(new SpectatorCountPacket(spectators.Count));
+        }
+    }
+
+    private static void Playing()
+    {
+    }
+
+    private static bool IsValidName(string name)
+    {
+        return name.All(char.IsLetterOrDigit);
     }
 
     enum State

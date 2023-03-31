@@ -7,7 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telepathy;
-using Uno.Server;
+using Uno.Client.Scenes;
+using Uno.Client.Scenes.MainMenu;
+using Uno.Packets;
 
 namespace Uno.Client;
 internal class UnoGame : Simulation
@@ -108,5 +110,30 @@ internal class UnoGame : Simulation
         activeScene.Update();
         activeScene.Render(canvas);
 
+        // help im sorry i added this here i promise
+        // i didnt know this would cause the dark realm
+        // to open please forgive me
+
+        // in all seriousness move this whenever cause
+        // like idk where u planned on putting this stuff
+        foreach (var packet in Client.Receive<StartPacket>())
+        {
+            SwitchScenes(new RendererDemoScene());
+        }
+
+        foreach (var packet in Client.Receive<StopPacket>())
+        {
+            // also maybe we shouldnt just like banish them
+            // to the main menu maybe be like "omg heyy.. sorry
+            // about this but like u cant play xD "
+            SwitchScenes(new MainMenuScene());
+        }
+
+        // this is actually kinda smort cause like when u
+        // get disconnect from server u gotta be canceled
+        foreach (var packet in Client.Receive<DisconnectPacket>())
+        {
+            SwitchScenes(new MainMenuScene());
+        }
     }
 }

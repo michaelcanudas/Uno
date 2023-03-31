@@ -101,11 +101,8 @@ internal class NameSelectMenu : MenuWindow
                 {
                     // we're in.
 
-                    var players = isJoiningAsSpectator ? packet.Players : packet.Players.Append(sentName);
+                    var players = packet.Players;
                     var spectators = packet.spectators;
-                    
-                    if (isJoiningAsSpectator)
-                        spectators++;
 
                     // transition to lobby menu
                     MenuScene!.windows.Pop(); // pop this window, we don't need it and leaving should go to main menu

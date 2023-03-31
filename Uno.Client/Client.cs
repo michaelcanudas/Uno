@@ -1,4 +1,5 @@
 ﻿using Telepathy;
+using Uno.Packets;
 
 namespace Uno.Client;
 
@@ -6,14 +7,18 @@ internal static class Client
 {
     private static Telepathy.Client client;
     private static List<Packet> packets;
-
+    
     public static bool IsConnected => client.Connected;
     public static bool IsConnecting => client.Connecting;
 
     static Client()
     {
-        client = new();
+        client = new(4096);
         packets = new();
+
+        client.OnConnected = Connected;
+        client.OnData = Data;
+        client.OnDisconnected = Disconnected;
     }
 
     public static void Start(string ip, int port)
@@ -24,31 +29,25 @@ internal static class Client
     public static void Tick()
     {
         packets.Clear();
-
-        while (client.GetNextMessage(out Message message))
-        {
-            if (message.eventType == EventType.Connected || message.eventType == EventType.Disconnected)
-            {
-                continue;
-            }
-
-            Stream stream = new MemoryStream(message.data);
-
-            var packet = Packet.Deserialize(stream);
-            packets.Add(packet);
-            Console.WriteLine("Received packet: " + packet.ToString());
-        }
+        client.Tick(100);
     }
 
-    public static async Task SendAsync(Packet packet)
+    private static void Connected()
     {
-        await Task.Run(() =>
-        {
-            MemoryStream stream = new MemoryStream();
-            packet.Serialize(stream);
+        packets.Add(new ConnectPacket());
+    }
 
-            client.Send(stream.ToArray());
-        });
+    private static void Data(ArraySegment<byte> data)
+    {
+        Stream stream = new MemoryStream(data.ToArray());
+        Packet packet = Packet.Deserialize(stream);
+
+        packets.Add(packet);
+    }
+
+    private static void Disconnected()
+    {
+        packets.Add(new DisconnectPacket());
     }
 
     public static void Send(Packet packet)

@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Uno.Client.Scenes;
 using Uno.Client.Scenes.MainMenu;
+using Uno.Packets;
 
 namespace Uno.Client;
 

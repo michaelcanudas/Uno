@@ -15,10 +15,14 @@ public static class Server
 
     public static void Start(int port)
     {
-        server = new();
+        server = new(4096);
         packets = new();
         Connections = new();
 
+        server.OnConnected = Connected;
+        server.OnData = Data;
+        server.OnDisconnected = Disconnected;
+        
         server.Start(port);
         IsRunning = true;
         Port = port;
@@ -27,35 +31,27 @@ public static class Server
     public static void Tick()
     {
         packets.Clear();
-        
-        while (server.GetNextMessage(out Message message))
-        {
-            if (message.eventType == EventType.Connected)
-            {
-                packets.Add((message.connectionId, new ConnectPacket()));
-                Connections.Add(message.connectionId);
-                continue;
-            }
-
-            if (message.eventType == EventType.Disconnected)
-            {
-                packets.Add((message.connectionId, new DisconnectPacket()));
-                Connections.Remove(message.connectionId);
-                continue;
-            }
-
-            Stream stream = new MemoryStream(message.data);
-            Packet packet = Packet.Deserialize(stream);
-            packets.Add((message.connectionId, packet));
-        }
+        server.Tick(100);
     }
 
-    public static async void SendAsync(int id, Packet packet)
+    private static void Connected(int id)
     {
-        await Task.Run(() =>
-        {
-            Send(id, packet);
-        });
+        packets.Add((id, new ConnectPacket()));
+        Connections.Add(id);
+    }
+
+    private static void Data(int id, ArraySegment<byte> data)
+    {
+        Stream stream = new MemoryStream(data.ToArray());
+        Packet packet = Packet.Deserialize(stream);
+
+        packets.Add((id, packet));
+    }
+
+    private static void Disconnected(int id)
+    {
+        packets.Add((id, new DisconnectPacket()));
+        Connections.Remove(id);
     }
 
     public static void Send(int id, Packet packet)
@@ -73,22 +69,31 @@ public static class Server
 
     public static void SendAllExcept(int except, Packet packet)
     {
-        MemoryStream stream = new MemoryStream();
-        packet.Serialize(stream);
-        var data = stream.ToArray();
-
         foreach (var connection in Connections)
         {
             if (connection == except)
                 continue;
 
-            server.Send(connection, data);
+            Send(connection, packet);
         }
     }
     
     public static IEnumerable<(int, T)> Receive<T>() where T : Packet
     {
         return packets.Where(data => data.packet is T).Select(data => (data.id, (data.packet as T)!));
+    }
+
+    public static void Kick(int id)
+    {
+        server.Disconnect(id);
+    }
+
+    public static void KickAll()
+    {
+        foreach (var connection in Connections)
+        {
+            Kick(connection);
+        }
     }
 
     public static void Stop()

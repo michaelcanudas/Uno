@@ -10,7 +10,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Uno.Client.Scenes.MainMenu;
+namespace Uno.Client.MainMenu;
 internal class MainMenuScene : GameScene
 {
     public string? errmsg = null;
@@ -25,7 +25,7 @@ internal class MainMenuScene : GameScene
     public override void Update()
     {
         windows.Peek().Layout();
-        
+
         base.Update();
     }
 
@@ -88,7 +88,7 @@ internal class MainMenuScene : GameScene
                 errmsg = "Invalid port.";
                 return;
             }
-            
+
             // save settings for next time
             // create game scene
             // initiate scene switch

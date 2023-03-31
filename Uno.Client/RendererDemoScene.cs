@@ -1,9 +1,9 @@
 ﻿using SimulationFramework;
 using SimulationFramework.Drawing;
 using Uno.Client.Gameplay;
-using Uno.Client.Scenes.MainMenu;
+using Uno.Client.MainMenu;
 
-namespace Uno.Client.Scenes;
+namespace Uno.Client;
 
 // i use this for testing renderers
 internal class RendererDemoScene : GameScene
@@ -31,8 +31,8 @@ internal class RendererDemoScene : GameScene
             Position = new(-1, 0)
         };
 
-        drawStack.Cards.Push(new InteractableCard(CardFace.Random(new(0))) 
-        { 
+        drawStack.Cards.Push(new InteractableCard(CardFace.Random(new(0)))
+        {
             IsFaceDown = true,
         });
 
@@ -41,7 +41,7 @@ internal class RendererDemoScene : GameScene
             var card = drawStack.Cards.Pop();
             card.IsFaceDown = false;
             hand.Cards.Add(card);
-            
+
             if (!drawStack.Cards.Any())
             {
                 for (int i = 0; i < 4; i++)
@@ -56,10 +56,10 @@ internal class RendererDemoScene : GameScene
             }
         };
 
-        hand.OnCardSelected += card => 
+        hand.OnCardSelected += card =>
         {
-            this.hand.Cards.Remove(card);
-            this.depotStack.Cards.Push(card); 
+            hand.Cards.Remove(card);
+            depotStack.Cards.Push(card);
         };
 
 

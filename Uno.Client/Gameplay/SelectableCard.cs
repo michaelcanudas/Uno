@@ -10,11 +10,13 @@ internal class InteractableCard
 {
     public CardFace Face { get; set; } = CardFace.Backface;
 
-    public Vector2 TargetPosition { get; set; }
-    public float TargetRotation { get; set; }
+    public Vector2 TargetPosition { get; set; } = Vector2.Zero;
+    public float TargetRotation { get; set; } = 0f;
+    public float TargetScale { get; set; } = 1;
 
-    public Vector2 Position { get; set; }
-    public float Rotation { get; set; }
+    public Vector2 Position { get; set; } = Vector2.Zero;
+    public float Rotation { get; set; } = 0f;
+    public float Scale { get; set; } = 1;
 
     public float Smoothing { get; set; } = 10;
 
@@ -29,6 +31,7 @@ internal class InteractableCard
     {
         Position = Vector2.Lerp(Position, TargetPosition, 1f - MathF.Exp(-Smoothing * Time.DeltaTime));
         Rotation = Angle.Lerp(Rotation, TargetRotation, 1f - MathF.Exp(-Smoothing * Time.DeltaTime));
+        Scale = MathHelper.Lerp(Scale, TargetScale, 1f - MathF.Exp(-Smoothing * Time.DeltaTime));
     }
 
     public bool ContainsPoint(Vector2 point, Vector2 localOffset = default)
@@ -37,7 +40,8 @@ internal class InteractableCard
 
         var matrix = 
             Matrix3x2.CreateTranslation(-Position) * 
-            Matrix3x2.CreateRotation(-Rotation);
+            Matrix3x2.CreateRotation(-Rotation) *
+            Matrix3x2.CreateScale(Scale);
 
         var pointLocalSpace = Vector2.Transform(point, matrix);
 
@@ -49,6 +53,7 @@ internal class InteractableCard
         canvas.PushState();
         canvas.Translate(Position);
         canvas.Rotate(Rotation);
+        canvas.Scale(Scale);
 
         UnoGame.Current.CardRenderer.DrawCard(canvas, IsFaceDown ? CardFace.Backface : Face, Vector2.Zero, 1, Alignment.BottomCenter);
 

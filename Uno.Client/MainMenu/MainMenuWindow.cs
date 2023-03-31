@@ -6,8 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Uno.Client.MainMenu;
 
-namespace Uno.Client.Scenes.MainMenu;
+namespace Uno.Client.MainMenu;
 internal class MainMenuWindow : MenuWindow
 {
     string hostname = "";

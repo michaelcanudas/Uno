@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Uno.Server;
 
-namespace Uno.Client.Scenes.MainMenu;
+namespace Uno.Client.MainMenu;
 internal class HostServerWindow : MenuWindow
 {
     string port = "";

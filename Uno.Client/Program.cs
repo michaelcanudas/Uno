@@ -6,8 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Uno.Client.Scenes;
-using Uno.Client.Scenes.MainMenu;
+using Uno.Client.MainMenu;
 using Uno.Packets;
 
 namespace Uno.Client;
@@ -17,7 +16,7 @@ internal static class Program
     private static void Main()
     {
         GameScene scene = new MainMenuScene();
-
+        
         // IMPORTANT: COMMENT THIS OUT IF YOU ARENT ME TESTING RENDERING
         // scene = new RendererDemoScene();
         

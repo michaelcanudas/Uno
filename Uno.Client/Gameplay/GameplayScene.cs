@@ -6,12 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Uno.Packets;
 
-namespace Uno.Client.Scenes;
+namespace Uno.Client.Gameplay;
 internal class GameplayScene : GameScene
 {
     public GameplayScene()
     {
-        
+
     }
 
     public override void Render(ICanvas canvas)

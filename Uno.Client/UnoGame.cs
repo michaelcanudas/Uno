@@ -7,8 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telepathy;
-using Uno.Client.Scenes;
-using Uno.Client.Scenes.MainMenu;
+using Uno.Client;
+using Uno.Client.MainMenu;
 using Uno.Packets;
 
 namespace Uno.Client;

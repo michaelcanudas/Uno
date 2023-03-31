@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Uno.Client.Scenes.MainMenu;
+namespace Uno.Client.MainMenu;
 internal abstract class MenuWindow
 {
     public MainMenuScene? MenuScene => UnoGame.Current.ActiveScene as MainMenuScene;

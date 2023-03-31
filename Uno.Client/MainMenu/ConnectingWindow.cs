@@ -5,10 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Uno.Client.MainMenu;
 using Uno.Packets;
 
-namespace Uno.Client.Scenes.MainMenu;
-internal class ConnectingWindow : MenuWindow
+namespace Uno.Client.MainMenu;
+internal class ConnectingWindow : MenuWindsow
 {
     private string address;
     private int port;

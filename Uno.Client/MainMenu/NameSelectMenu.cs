@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Uno.Packets;
 
-namespace Uno.Client.Scenes.MainMenu;
+namespace Uno.Client.MainMenu;
 internal class NameSelectMenu : MenuWindow
 {
     const string NameCacheFile = "name.txt";
@@ -83,7 +83,7 @@ internal class NameSelectMenu : MenuWindow
         if (error is not null)
         {
             ImGui.Separator();
-            ImGui.TextColored(Color.Red.AsVector4(), error); 
+            ImGui.TextColored(Color.Red.AsVector4(), error);
         }
         else if (isJoining)
         {

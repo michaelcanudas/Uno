@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Uno.Packets;
 
-namespace Uno.Client.Scenes.MainMenu;
+namespace Uno.Client.MainMenu;
 internal class LobbyMenu : MenuWindow
 {
     List<string> players;

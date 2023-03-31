@@ -1,6 +1,6 @@
 ﻿using ImGuiNET;
 
-namespace Uno.Client.Scenes.MainMenu;
+namespace Uno.Client.MainMenu;
 
 internal class SettingsWindow : MenuWindow
 {

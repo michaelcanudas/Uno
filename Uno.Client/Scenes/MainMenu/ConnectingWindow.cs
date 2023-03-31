@@ -61,7 +61,6 @@ internal class ConnectingWindow : MenuWindow
             if (Client.IsConnected)
             {
                 // we sucessfully connected
-                Client.Send(new TextPacket("Hello from the client!"));
                 MenuScene.windows.Pop(); // pop this window
                 MenuScene.windows.Push(new NameSelectMenu()); // push lobby window
             }

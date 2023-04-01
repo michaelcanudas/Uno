@@ -11,6 +11,6 @@ public class PlayCardAction : PlayerAction
 
     public class Response : PlayerAction
     {
-        public bool Ok { get; set; }
+        public Card PlayedCard { get; set; }
     }
 }

@@ -108,4 +108,9 @@ internal class PlayerHand
 
         return null;
     }
+
+    public InteractableCard? GetCard(Card card)
+    {
+        return Cards.FirstOrDefault(c => c.Card.ID == card.ID);
+    }
 }

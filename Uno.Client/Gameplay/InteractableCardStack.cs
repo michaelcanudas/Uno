@@ -23,14 +23,23 @@ internal class InteractableCardStack
 
     public event Action? Clicked;
     public bool IsClicked { get; private set; }
+    public bool Opaque { get; set; }
 
     public void Render(ICanvas canvas)
     {
         canvas.PushState();
         canvas.Translate(this.Position);
         canvas.Rotate(this.Rotation);
-        UnoGame.Current.CardRenderer.DrawCard(canvas, CardFace.Backface, this.Position, this.Scale);
+        UnoGame.Current.CardRenderer.DrawCard(canvas, CardFace.Backface, Vector2.Zero, this.Scale, Alignment.BottomCenter);
         canvas.PopState();
+
+        if (Opaque)
+        {
+            foreach (var card in Cards)
+            {
+                card.Render(canvas);
+            }
+        }
     }
 
     public void Update()

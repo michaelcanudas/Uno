@@ -42,9 +42,8 @@ internal class Uno
                     Server.Send(id, new PlayerActionPacket(packet.PlayerName, new DrawCardAction.Response(card)));
                     Server.SendAllExcept(id, new PlayerActionPacket(packet.PlayerName, new DrawCardAction.Response(card with { Face = CardFace.Backface })));
                     break;
-                case PlayCardAction:
-                    Server.Send(id, new PlayerActionPacket(packet.PlayerName, new PlayCardAction.Response { Ok = true }));
-                    // Server.SendAllExcept(id, new );
+                case PlayCardAction action:
+                    Server.SendAll(new PlayerActionPacket(packet.PlayerName, new PlayCardAction.Response { PlayedCard = action.Card }));
                     break;
                 default:
                     // return error packet

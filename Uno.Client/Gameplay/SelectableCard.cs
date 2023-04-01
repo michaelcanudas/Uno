@@ -43,7 +43,7 @@ internal class InteractableCard
         var matrix = 
             Matrix3x2.CreateTranslation(-Position) * 
             Matrix3x2.CreateRotation(-Rotation) *
-            Matrix3x2.CreateScale(Scale);
+            Matrix3x2.CreateScale(1f/Scale);
 
         var pointLocalSpace = Vector2.Transform(point, matrix);
 

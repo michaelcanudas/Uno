@@ -39,7 +39,7 @@ internal class GameplayScene : GameScene
             if (player == playerName)
                 continue;
 
-            Hands.Add(player, new(Enumerable.Empty<InteractableCard>()) { Position = Vector2.UnitY * -3, Rotation = Angle.ToRadians(180), Scale = .5f });
+            Hands.Add(player, new(Enumerable.Empty<InteractableCard>()) { Position = Vector2.UnitY * -3.5f, Rotation = Angle.ToRadians(180), Scale = .5f });
         }
     }
 
@@ -73,6 +73,7 @@ internal class GameplayScene : GameScene
                     hand = Hands[packet.PlayerName];
                     var card = hand.GetCard(response.PlayedCard) ?? throw new();
                     hand.Cards.Remove(card);
+                    card.Card = response.PlayedCard;
                     PlayStack.Cards.Push(card);
                     break;
                 default:

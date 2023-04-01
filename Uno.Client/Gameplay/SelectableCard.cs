@@ -8,7 +8,9 @@ using System.Threading.Tasks;
 namespace Uno.Client.Gameplay;
 internal class InteractableCard
 {
-    public CardFace Face { get; set; } = CardFace.Backface;
+    public CardFace Face { get => Card.Face; }
+
+    public Card Card { get; set; }
 
     public Vector2 TargetPosition { get; set; } = Vector2.Zero;
     public float TargetRotation { get; set; } = 0f;
@@ -22,9 +24,9 @@ internal class InteractableCard
 
     public bool IsFaceDown { get; set; } = false;
 
-    public InteractableCard(CardFace face)
+    public InteractableCard(Card card)
     {
-        this.Face = face;
+        Card = card;
     }
 
     public void Update()

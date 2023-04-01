@@ -47,7 +47,7 @@ internal class PlayerHand
     public void Update()
     {
         float breadth = breadthUpper - (breadthUpper - breadthLower) / MathF.Pow(breadthStrength, (Cards.Count - 2));
-        float increment = Scale * breadth / Cards.Count;
+        float increment = (breadth / Cards.Count);
         float baseAngle = (increment - breadth) / 2f - (MathF.PI / 2f);
 
         var mousePosition = Camera.Active.ScreenToWorld(Mouse.Position);
@@ -74,13 +74,13 @@ internal class PlayerHand
                 }
             }
 
-            card.TargetPosition = this.Position + Vector2.UnitY * (radius - offset) + Angle.ToVector(angle) * radius;
+            card.TargetPosition = this.Position + Scale * (Vector2.UnitY * (radius - offset)  + Angle.ToVector(angle) * radius);
             card.TargetRotation = angle + (MathF.PI/2f);
             card.TargetScale = this.Scale;
 
             if (SelectionEnabled && card == SelectedCard)
             {
-                card.TargetScale *= 1.01f;
+                card.TargetScale *= 1.20f;
                 card.TargetPosition += Angle.ToVector(angle) * .15f * Scale;
             }
 

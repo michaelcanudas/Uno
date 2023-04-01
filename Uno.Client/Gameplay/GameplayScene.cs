@@ -35,18 +35,18 @@ internal class GameplayScene : GameScene
         PlayStack = new() { Position = new(0, 0) };
         DrawStack = new() { Position = new(-1, 0) };
 
-        var rng = new Random(53);
-        for (int i = 0; i < 100; i++)
-        {
-            DrawStack.Cards.Push(new InteractableCard(CardFace.Random(rng)) { IsFaceDown = true });
-        }
+        // var rng = new Random(53);
+        // for (int i = 0; i < 100; i++)
+        // {
+        //     DrawStack.Cards.Push(new InteractableCard(CardFace.Random(rng)) { IsFaceDown = true });
+        // }
 
         foreach (var player in allPlayers)
         {
             if (player == playerName)
                 continue;
 
-            OtherPlayers.Add(player, new(Enumerable.Empty<InteractableCard>()) {  Position = Vector2.UnitY * -8, Rotation = Angle.ToRadians(180), Scale = .5f });
+            OtherPlayers.Add(player, new(Enumerable.Empty<InteractableCard>()) { Position = Vector2.UnitY * -3, Rotation = Angle.ToRadians(180), Scale = .5f });
         }
     }
 
@@ -66,6 +66,8 @@ internal class GameplayScene : GameScene
         base.Render(canvas);
     }
 
+    Queue<InteractableCard> playedCards = new();
+
     public override void Update()
     {
         foreach (var packet in Client.Receive<PlayerActionPacket>())
@@ -75,10 +77,10 @@ internal class GameplayScene : GameScene
             {
                 case DrawCardAction:
                     hand = OtherPlayers[packet.PlayerName];
-                    hand.Cards.Add(DrawStack.Cards.Pop());
+                    hand.Cards.Add(new InteractableCard(new Card(0, CardFace.Backface)) { Position = DrawStack.Position });
                     break;
-                case DrawCardResponse response:
-                    var c = new InteractableCard(response.Card.Face);
+                case DrawCardAction.Response response:
+                    var c = new InteractableCard(response.Card);
                     c.Position = DrawStack.Position;
                     PlayerHand.Cards.Add(c);
                     break;
@@ -88,6 +90,11 @@ internal class GameplayScene : GameScene
                     card.IsFaceDown = false;
                     hand.Cards.Remove(card);
                     PlayStack.Cards.Push(card);
+                    break;
+                case PlayCardAction.Response resp:
+                    var card2 = playedCards.Dequeue();
+                    PlayerHand.Cards.Remove(card2);
+                    PlayStack.Cards.Push(card2);
                     break;
                 default:
                     throw new Exception("Unknown action type");
@@ -119,11 +126,8 @@ internal class GameplayScene : GameScene
 
         if (Mouse.IsButtonPressed(MouseButton.Left) && PlayerHand.SelectedCard is not null)
         {
-            Client.Send(new PlayerActionPacket(this.PlayerName, new PlayCardAction()));
-
-            var card = PlayerHand.Cards.First();
-            PlayerHand.Cards.Remove(card);
-            PlayStack.Cards.Push(card);
+            Client.Send(new PlayerActionPacket(this.PlayerName, new PlayCardAction() { Card = PlayerHand.SelectedCard.Card }));
+            playedCards.Enqueue(PlayerHand.SelectedCard);
         }
 
         base.Update();

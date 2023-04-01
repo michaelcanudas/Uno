@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Telepathy;
 using Uno.Packets;
 
 namespace Uno.Server;
@@ -112,3 +113,9 @@ public static class Server
         server.Stop();
     }
 }
+
+class GameState
+{
+    
+}
+

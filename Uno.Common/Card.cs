@@ -7,12 +7,32 @@ using System.Threading.Tasks;
 namespace Uno;
 
 // card face + state
-public class Card
+// made a record for by-value equality
+public record Card
 {
+    public int ID { get; set; }
     public CardFace Face { get; set; }
 
-    public Card(CardColor color, CardKind kind)
+    public Card(int id, CardColor color, CardKind kind)
     {
+        this.ID = id;
         Face = new CardFace(kind, color);
+    }
+
+    public Card(int id, CardFace face)
+    {
+        this.ID = id;
+        Face = face;
+    }
+
+
+    public Card(int id)
+    {
+
+    }
+
+    public Card()
+    {
+
     }
 }

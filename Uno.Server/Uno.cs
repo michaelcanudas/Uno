@@ -39,8 +39,12 @@ internal class Uno
                     Card card = stack.Pop();
                     hands[currentPlayer].Add(card);
 
-                    Server.Send(id, new PlayerActionPacket(packet.PlayerName, new DrawCardResponse(card)));
-                    Server.SendAllExcept(id, packet);
+                    Server.Send(id, new PlayerActionPacket(packet.PlayerName, new DrawCardAction.Response(card)));
+                    Server.SendAllExcept(id, new PlayerActionPacket(packet.PlayerName, new DrawCardAction.Response(card with { Face = CardFace.Backface })));
+                    break;
+                case PlayCardAction:
+                    Server.Send(id, new PlayerActionPacket(packet.PlayerName, new PlayCardAction.Response { Ok = true }));
+                    // Server.SendAllExcept(id, new );
                     break;
                 default:
                     // return error packet
@@ -54,23 +58,25 @@ internal class Uno
         Stack<Card> stack = new();
         List<Card> cards = new List<Card>();
 
+        int id = 1;
+
         for (int i = 0; i < 4; i++)
         {
-            cards.Add(new Card((CardColor)i, CardKind.Zero));
+            cards.Add(new Card(id++, (CardColor)i, CardKind.Zero));
             for (int j = 0; j < 13; j++)
             {
                 if (j == 9)
                     continue;
                 
-                cards.Add(new Card((CardColor)i, (CardKind)j));
-                cards.Add(new Card((CardColor)i, (CardKind)j));
+                cards.Add(new Card(id++, (CardColor)i, (CardKind)j));
+                cards.Add(new Card(id++, (CardColor)i, (CardKind)j));
             }
         }
 
         for (int i = 0; i < 4; i++)
         {
-            cards.Add(new Card(CardColor.Neutral, CardKind.Wild));
-            cards.Add(new Card(CardColor.Neutral, CardKind.WildDraw4));
+            cards.Add(new Card(id++, CardColor.Neutral, CardKind.Wild));
+            cards.Add(new Card(id++, CardColor.Neutral, CardKind.WildDraw4));
         }
 
         

@@ -26,13 +26,11 @@ internal class InteractableCardStack
 
     public void Render(ICanvas canvas)
     {
-        if (!Cards.Any())
-            return;
-
-        foreach (var card in Cards.Reverse())
-        {
-            card.Render(canvas);
-        }
+        canvas.PushState();
+        canvas.Translate(this.Position);
+        canvas.Rotate(this.Rotation);
+        UnoGame.Current.CardRenderer.DrawCard(canvas, CardFace.Backface, this.Position, this.Scale);
+        canvas.PopState();
     }
 
     public void Update()

@@ -14,7 +14,7 @@ internal class RendererDemoScene : GameScene
     bool flycam;
     InteractableCardStack depotStack;
     InteractableCardStack drawStack;
-
+    ActionsBar window;
     public override void Begin()
     {
         flyingCamera = new(4);
@@ -62,6 +62,7 @@ internal class RendererDemoScene : GameScene
             depotStack.Cards.Push(card);
         };
 
+        window = new();
 
         base.Begin();
     }
@@ -83,6 +84,7 @@ internal class RendererDemoScene : GameScene
 
     public override void Update()
     {
+        window.Layout();
         Camera camera = flycam ? flyingCamera : fixedCamera;
         camera.Update();
         camera.SetActive();

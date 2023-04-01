@@ -14,15 +14,33 @@ internal abstract class MenuWindow
 
     public virtual ImGuiWindowFlags WindowFlags => ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysAutoResize;
     public virtual string Title { get; }
+    public virtual Vector2 Pivot => new(.5f);
+    public virtual Alignment Alignment => Alignment.Center;
+    public virtual bool IsModal => false;
 
     public virtual void Layout()
     {
-        ImGui.SetNextWindowPos(new(Graphics.GetOutputCanvas().Width / 2, Graphics.GetOutputCanvas().Height / 2), ImGuiCond.Always, new(.5f));
-        if (ImGui.Begin(Title ?? string.Empty, WindowFlags))
+        Rectangle bounds = new(0, 0, Graphics.GetOutputCanvas().Width, Graphics.GetOutputCanvas().Height);
+
+        ImGui.SetNextWindowPos(bounds.GetAlignedPoint(Alignment), ImGuiCond.Always, Pivot);
+
+        if (IsModal)
         {
-            LayoutContent();
+            bool open = true;
+            if (ImGui.BeginPopupModal(Title ?? string.Empty, ref open, WindowFlags))
+            {
+                LayoutContent();
+                ImGui.End();
+            }
         }
-        ImGui.End();
+        else
+        {
+            if (ImGui.Begin(Title ?? string.Empty, WindowFlags))
+            {
+                LayoutContent();
+            }
+            ImGui.End();
+        }
     }
 
     protected abstract void LayoutContent();

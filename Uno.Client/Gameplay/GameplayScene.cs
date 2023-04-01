@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Uno.Actions;
+using Uno.Client.MainMenu;
 using Uno.Packets;
 
 namespace Uno.Client.Gameplay;
@@ -22,7 +23,10 @@ internal class GameplayScene : GameScene
     // stack where players draw cards from
     public InteractableCardStack DrawStack { get; set; }
     public Camera Camera;
-
+    
+    private ColorSelectWindow? colorSelectWindow;
+    private ActionsBar actionsBar;
+    private EscMenu? escMenu;
 
     public GameplayScene(string playerName, List<string> allPlayers)
     {
@@ -32,7 +36,7 @@ internal class GameplayScene : GameScene
         PlayStack = new() { Position = new(0, 0), Opaque = false };
         DrawStack = new() { Position = new(-1, 0), Opaque = true };
 
-        Hands.Add(playerName, new(Enumerable.Empty<InteractableCard>()) { Position = new(0, 2), Rotation = Angle.ToRadians(0), Scale = 1f });
+        Hands.Add(playerName, new(Enumerable.Empty<InteractableCard>()) { SelectionEnabled = true, Position = new(0, 2), Rotation = Angle.ToRadians(0), Scale = 1f });
 
         foreach (var player in allPlayers)
         {
@@ -41,6 +45,8 @@ internal class GameplayScene : GameScene
 
             Hands.Add(player, new(Enumerable.Empty<InteractableCard>()) { Position = Vector2.UnitY * -3.5f, Rotation = Angle.ToRadians(180), Scale = .5f });
         }
+
+        actionsBar = new();
     }
 
     public override void Render(ICanvas canvas)
@@ -60,6 +66,22 @@ internal class GameplayScene : GameScene
 
     public override void Update()
     {
+        if (Keyboard.IsKeyPressed(Key.Esc))
+        {
+            if (escMenu is null)
+            {
+                escMenu = new();
+            }
+            else
+            {
+                escMenu = null;
+            }
+        }
+
+        actionsBar.Layout();
+        colorSelectWindow?.Layout();
+        escMenu?.Layout();
+
         foreach (var packet in Client.Receive<PlayerActionPacket>())
         {
             PlayerHand hand;
@@ -84,13 +106,13 @@ internal class GameplayScene : GameScene
         Camera.Update();
         Camera.SetActive();
 
-        DrawStack.Update();
-        PlayStack.Update();
-
         foreach (var (_, hand) in Hands)
         {
             hand.Update();
         }
+
+        DrawStack.Update();
+        PlayStack.Update();
 
         if (DrawStack.IsClicked)
         {

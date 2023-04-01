@@ -126,7 +126,7 @@ public static class Game
                 state = State.Playing;
                 Server.SendAll(new StartPacket());
 
-                uno = new(players.ToArray(), new Uno.Settings());
+                uno = new(players.ToArray(), new Uno.Settings(AllowRed: true));
             }
         }
     }

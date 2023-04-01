@@ -9,8 +9,8 @@ namespace Uno;
 public enum CardColor
 {
     Red,
-    Blue,
     Green,
+    Blue,
     Yellow,
     Neutral, // for wilds and the backface
 }

@@ -77,6 +77,11 @@ internal class GameplayScene : GameScene
                     hand = OtherPlayers[packet.PlayerName];
                     hand.Cards.Add(DrawStack.Cards.Pop());
                     break;
+                case DrawCardResponse response:
+                    var c = new InteractableCard(response.Card.Face);
+                    c.Position = DrawStack.Position;
+                    PlayerHand.Cards.Add(c);
+                    break;
                 case PlayCardAction:
                     hand = OtherPlayers[packet.PlayerName];
                     var card = hand.Cards.First();
@@ -105,9 +110,11 @@ internal class GameplayScene : GameScene
         {
             Client.Send(new PlayerActionPacket(this.PlayerName, new DrawCardAction()));
             
+            /*
             var card = DrawStack.Cards.Pop();
             card.IsFaceDown = false;
             PlayerHand.Cards.Add(card);
+            */
         }
 
         if (Mouse.IsButtonPressed(MouseButton.Left) && PlayerHand.SelectedCard is not null)

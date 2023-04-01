@@ -4,13 +4,15 @@ namespace Uno.Server;
 
 public static class Game
 {
+    private static Uno uno;
+
     private static State state;
     private static List<Player> players;
     private static HashSet<int> spectators;
     private static int elevatedConnection;
 
-    private const int MIN_PLAYERS = 2;
-    private const int MAX_PLAYERS = 8;
+    private const int MIN_PLAYERS = 1;
+    private const int MAX_PLAYERS = 10;
 
     static Game()
     {
@@ -69,16 +71,6 @@ public static class Game
 
     private static void HandleConditions()
     {
-        // commented out cause i think i added a start button :D
-        // if (players.Count >= MIN_PLAYERS && state == State.Waiting)
-        // {
-        //     state = State.Playing;
-        // 
-        //     Server.SendAll(new StartPacket());
-        // 
-        //     Console.WriteLine("Game started");
-        // }
-
         if (players.Count < MIN_PLAYERS && state == State.Playing)
         {
             state = State.Waiting;
@@ -133,16 +125,15 @@ public static class Game
             {
                 state = State.Playing;
                 Server.SendAll(new StartPacket());
+
+                uno = new(players.ToArray());
             }
         }
     }
 
     private static void Playing()
     {
-        foreach (var (id, packet) in Server.Receive<PlayerActionPacket>())
-        {
-            Server.SendAllExcept(id, packet);
-        }
+        uno.Tick();
     }
 
     private static bool IsValidName(string name)

@@ -10,4 +10,9 @@ namespace Uno;
 public class Card
 {
     public CardFace Face { get; set; }
+
+    public Card(CardColor color, CardKind kind)
+    {
+        Face = new CardFace(kind, color);
+    }
 }

@@ -10,9 +10,11 @@ internal class Uno
     private List<Card>[] hands;
     
     private Player[] players;
-    private int currentPlayer;
+    private Player current;
 
-    public Uno(Player[] players)
+    private Settings settings;
+
+    public Uno(Player[] players, Settings settings)
     {
         this.stack = StackCards();
         this.discard = new Stack<Card>();
@@ -23,33 +25,66 @@ internal class Uno
         }
 
         this.players = players;
-        this.currentPlayer = 0;
+        this.current = players[0];
+
+        this.settings = settings;
     }
 
     public void Tick()
     {
         foreach (var (id, packet) in Server.Receive<PlayerActionPacket>())
         {
-            //if (id != currentPlayer)
-            //    continue;
-            
             switch (packet.Action)
             {
-                case DrawCardAction:
-                    Card card = stack.Pop();
-                    hands[currentPlayer].Add(card);
-
-                    Server.Send(id, new PlayerActionPacket(packet.PlayerName, new DrawCardAction.Response(card)));
-                    Server.SendAllExcept(id, new PlayerActionPacket(packet.PlayerName, new DrawCardAction.Response(card with { Face = CardFace.Backface })));
+                case DrawCardAction action:
+                    DrawCard(id, packet.PlayerName, action);
                     break;
                 case PlayCardAction action:
-                    Server.SendAll(new PlayerActionPacket(packet.PlayerName, new PlayCardAction.Response { PlayedCard = action.Card }));
-                    break;
-                default:
-                    // return error packet
+                    PlayCard(id, packet.PlayerName, action);
                     break;
             }
         }
+    }
+
+    private void DrawCard(int id, string name, DrawCardAction action)
+    {
+        if (current.Connection != id)
+            return;
+
+        if (stack.Count == 0)
+            return;
+
+        Card card = stack.Pop();
+        int index = Array.IndexOf(players, current);
+        hands[index].Add(card);
+
+        Server.Send(id, new PlayerActionPacket(name, new DrawCardAction.Response(card)));
+        Server.SendAllExcept(id, new PlayerActionPacket(name, new DrawCardAction.Response(card with { Face = CardFace.Backface })));
+
+        // check if next turn
+        Turn();
+    }
+
+    private void PlayCard(int id, string name, PlayCardAction action)
+    {
+        if (current.Connection != id)
+            return;
+
+        if (!settings.AllowRed && action.Card.Face.Color == CardColor.Red)
+            return;
+
+        Server.SendAll(new PlayerActionPacket(name, new PlayCardAction.Response { PlayedCard = action.Card }));
+
+        // check if next turn
+        Turn();
+    }
+
+    private void Turn()
+    {
+        int index = Array.IndexOf(players, current);
+        index = (index + 1) % players.Length;
+
+        current = players[index];
     }
 
     private Stack<Card> StackCards()
@@ -89,4 +124,8 @@ internal class Uno
 
         return stack;
     }
+
+    public record Settings(
+        bool AllowRed = false
+    );
 }

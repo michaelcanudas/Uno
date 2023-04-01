@@ -13,7 +13,9 @@ namespace Uno.Client.Gameplay;
 internal class PlayerHand
 {
     public List<InteractableCard> Cards { get; set; }
-    public Vector2 Position { get; set; }
+    public Vector2 Position { get; set; } = Vector2.Zero;
+    public float Rotation { get; set; } = 0f;
+    public float Scale { get; set; } = 1f;
 
     public PlayerHand(IEnumerable<InteractableCard> cards)
     {
@@ -39,13 +41,13 @@ internal class PlayerHand
         }
 
         canvas.Stroke(Color.Purple);
-        canvas.DrawCircle(Position.X, Position.Y-offset+radius, radius);
+        // canvas.DrawCircle(Position.X, Position.Y-offset+radius, radius);
     }
 
     public void Update()
     {
         float breadth = breadthUpper - (breadthUpper - breadthLower) / MathF.Pow(breadthStrength, (Cards.Count - 2));
-        float increment = breadth / Cards.Count;
+        float increment = Scale * breadth / Cards.Count;
         float baseAngle = (increment - breadth) / 2f - (MathF.PI / 2f);
 
         var mousePosition = Camera.Active.ScreenToWorld(Mouse.Position);
@@ -56,11 +58,11 @@ internal class PlayerHand
         {
             var card = Cards[i];
 
-            float angle = baseAngle + i * increment;
+            float angle = this.Rotation + baseAngle + i * increment;
             
             if (selectedCardIndex is not -1 && selectedCardIndex != (Cards.Count - 1))
             {
-                float diff = (increment / -2f) + Angle.ToRadians(12.5f / radius);
+                float diff = (increment / -2f) + Scale * Angle.ToRadians(12.5f / radius);
 
                 if (i <= selectedCardIndex)
                 {
@@ -72,13 +74,16 @@ internal class PlayerHand
                 }
             }
 
-            card.TargetPosition = Position + Vector2.UnitY * (radius - offset) + Angle.ToVector(angle) * radius;
+            card.TargetPosition = this.Position + Vector2.UnitY * (radius - offset) + Angle.ToVector(angle) * radius;
             card.TargetRotation = angle + (MathF.PI/2f);
+            card.TargetScale = this.Scale;
 
             if (SelectionEnabled && card == SelectedCard)
             {
-                card.TargetPosition += Angle.ToVector(angle) * .15f;
+                card.TargetScale *= 1.01f;
+                card.TargetPosition += Angle.ToVector(angle) * .15f * Scale;
             }
+
 
             card.Update();
         }

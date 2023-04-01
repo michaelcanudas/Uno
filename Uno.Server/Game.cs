@@ -10,7 +10,7 @@ public static class Game
     private static int elevatedConnection;
 
     private const int MIN_PLAYERS = 2;
-    private const int MAX_PLAYERS = 10;
+    private const int MAX_PLAYERS = 8;
 
     static Game()
     {

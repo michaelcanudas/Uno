@@ -17,7 +17,9 @@ internal class InteractableCardStack
     float heightPerCard = .1f;
     float xoffset = 0.01f, yoffset = 0.1f;
 
-    public Vector2 Position { get; set; }
+    public Vector2 Position { get; set; } = Vector2.Zero;
+    public float Rotation { get; set; } = 0f;
+    public float Scale { get; set; } = 1f;
 
     public event Action? Clicked;
     public bool IsClicked { get; private set; }
@@ -38,7 +40,8 @@ internal class InteractableCardStack
         foreach (var card in Cards)
         {
             card.TargetPosition = this.Position;
-            card.TargetRotation = 0f;
+            card.TargetRotation = this.Rotation;
+            card.TargetScale = this.Scale;
             card.Update();
         }
 

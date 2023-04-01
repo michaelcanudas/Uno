@@ -26,28 +26,27 @@ internal class GameplayScene : GameScene
     public Camera Camera;
 
 
-    public GameplayScene(string playerName, IEnumerable<string> allPlayers)
+    public GameplayScene(string playerName, List<string> allPlayers)
     {
         PlayerName = playerName;
         Camera = new(4);
 
-        PlayerHand = new(Enumerable.Empty<InteractableCard>()) { Position = new(0, 2) };
+        PlayerHand = new(Enumerable.Empty<InteractableCard>()) { Position = new(0, 2), SelectionEnabled = true };
         PlayStack = new() { Position = new(0, 0) };
         DrawStack = new() { Position = new(-1, 0) };
 
         var rng = new Random(53);
         for (int i = 0; i < 100; i++)
         {
-            DrawStack.Cards.Push(new InteractableCard(CardFace.Random(rng)));
+            DrawStack.Cards.Push(new InteractableCard(CardFace.Random(rng)) { IsFaceDown = true });
         }
 
-        int a = 1;
         foreach (var player in allPlayers)
         {
             if (player == playerName)
                 continue;
 
-            OtherPlayers.Add(player, new(Enumerable.Empty<InteractableCard>()) { Position = new(a++, -1) });
+            OtherPlayers.Add(player, new(Enumerable.Empty<InteractableCard>()) {  Position = Vector2.UnitY * -8, Rotation = Angle.ToRadians(180), Scale = .5f });
         }
     }
 
@@ -56,7 +55,7 @@ internal class GameplayScene : GameScene
         Camera.ApplyTo(canvas);
 
         DrawStack.Render(canvas);
-        PlayStack.Render(canvas);
+        PlayStack.Render(canvas); 
         PlayerHand.Render(canvas);
 
         foreach (var (_, hand) in OtherPlayers)
@@ -81,6 +80,7 @@ internal class GameplayScene : GameScene
                 case PlayCardAction:
                     hand = OtherPlayers[packet.PlayerName];
                     var card = hand.Cards.First();
+                    card.IsFaceDown = false;
                     hand.Cards.Remove(card);
                     PlayStack.Cards.Push(card);
                     break;
@@ -104,7 +104,10 @@ internal class GameplayScene : GameScene
         if (DrawStack.IsClicked)
         {
             Client.Send(new PlayerActionPacket(this.PlayerName, new DrawCardAction()));
-            PlayerHand.Cards.Add(DrawStack.Cards.Pop());
+            
+            var card = DrawStack.Cards.Pop();
+            card.IsFaceDown = false;
+            PlayerHand.Cards.Add(card);
         }
 
         if (Mouse.IsButtonPressed(MouseButton.Left) && PlayerHand.SelectedCard is not null)
@@ -118,11 +121,4 @@ internal class GameplayScene : GameScene
 
         base.Update();
     }
-}
-
-class StateMachine
-{
-
-
-
 }

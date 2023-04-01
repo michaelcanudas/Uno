@@ -38,12 +38,19 @@ internal class GameplayScene : GameScene
 
         Hands.Add(playerName, new(Enumerable.Empty<InteractableCard>()) { SelectionEnabled = true, Position = new(0, 2), Rotation = Angle.ToRadians(0), Scale = 1f });
 
+        var count = allPlayers.Count - 1;
+        float breadth = 3f;
+        float increment = breadth / count;
+        float baseX = (increment - breadth) / 2f;
+
+        float x = baseX;
         foreach (var player in allPlayers)
         {
             if (player == playerName)
                 continue;
 
-            Hands.Add(player, new(Enumerable.Empty<InteractableCard>()) { Position = Vector2.UnitY * -3.5f, Rotation = Angle.ToRadians(180), Scale = .5f });
+            Hands.Add(player, new(Enumerable.Empty<InteractableCard>()) { Position = new(x, -3.75f), Rotation = Angle.ToRadians(180), Scale = .5f });
+            x += increment;
         }
 
         actionsBar = new();

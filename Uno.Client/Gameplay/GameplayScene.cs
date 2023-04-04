@@ -28,7 +28,7 @@ internal class GameplayScene : GameScene
     private ActionsBar actionsBar;
     private EscMenu? escMenu;
 
-    public GameplayScene(string playerName, List<string> allPlayers)
+    public GameplayScene(string playerName, StartPacket initialState)
     {
         CurrentPlayerName = playerName;
         Camera = new(4);
@@ -36,20 +36,21 @@ internal class GameplayScene : GameScene
         PlayStack = new() { Position = new(0, 0), Opaque = false };
         DrawStack = new() { Position = new(-1, 0), Opaque = true };
 
-        Hands.Add(playerName, new(Enumerable.Empty<InteractableCard>()) { SelectionEnabled = true, Position = new(0, 2), Rotation = Angle.ToRadians(0), Scale = 1f });
+        Hands.Add(playerName, new(initialState.GetStartingHand(playerName).Select(c => new InteractableCard(c))) { SelectionEnabled = true, Position = new(0, 2) });
+        PlayStack.Cards.Push(new(initialState.StartingDiscard));
 
-        var count = allPlayers.Count - 1;
+        var count = initialState.Players.Length - 1;
         float breadth = 3f;
         float increment = breadth / count;
         float baseX = (increment - breadth) / 2f;
 
         float x = baseX;
-        foreach (var player in allPlayers)
+        foreach (var player in initialState.Players)
         {
             if (player == playerName)
                 continue;
 
-            Hands.Add(player, new(Enumerable.Empty<InteractableCard>()) { Position = new(x, -3.75f), Rotation = Angle.ToRadians(180), Scale = .5f });
+            Hands.Add(player, new(initialState.GetStartingHand(player).Select(c => new InteractableCard(c))) { Position = new(x, -3.75f), Rotation = Angle.ToRadians(180), Scale = .5f });
             x += increment;
         }
 
@@ -91,19 +92,33 @@ internal class GameplayScene : GameScene
 
         foreach (var packet in Client.Receive<PlayerActionPacket>())
         {
-            PlayerHand hand;
+            PlayerHand hand = Hands[packet.PlayerName];
             switch (packet.Action)
             {
                 case DrawCardAction.Response response:
-                    var c = new InteractableCard(response.Card) { Position = DrawStack.Position };
-                    Hands[packet.PlayerName].Cards.Add(c);
+                    hand.Cards.AddRange(
+                        response.Cards.Select(
+                            c => new InteractableCard(c) { Position = DrawStack.Position }
+                            )
+                        );
                     break;
                 case PlayCardAction.Response response:
-                    hand = Hands[packet.PlayerName];
                     var card = hand.GetCard(response.PlayedCard) ?? throw new();
                     hand.Cards.Remove(card);
                     card.Card = response.PlayedCard;
                     PlayStack.Cards.Push(card);
+
+                    if (card.Face.Kind.IsWild() && packet.PlayerName == this.CurrentPlayerName)
+                    {
+                        // we need to select a color!! server will wait for us, open window now.
+                        colorSelectWindow = new();
+                    }
+                    break;
+                case SelectColorAction.Response response:
+                    var wildCard = PlayStack.Cards.Peek();
+                    wildCard.Card.Face = new(wildCard.Face.Kind, response.Color);
+                    if (packet.PlayerName == this.CurrentPlayerName)
+                        this.colorSelectWindow = null; // our color select went through
                     break;
                 default:
                     throw new Exception("Unknown action type");
@@ -120,6 +135,24 @@ internal class GameplayScene : GameScene
 
         DrawStack.Update();
         PlayStack.Update();
+
+        if (colorSelectWindow is not null)
+        {
+            colorSelectWindow.Layout();
+
+            if (colorSelectWindow.IsColorSelected)
+            {
+                var action = new SelectColorAction()
+                {
+                    Color = colorSelectWindow.SelectedColor.Value
+                };
+
+                Client.Send(new PlayerActionPacket(this.CurrentPlayerName, action));
+                colorSelectWindow = null;
+            }
+
+            return;
+        }
 
         if (DrawStack.IsClicked)
         {

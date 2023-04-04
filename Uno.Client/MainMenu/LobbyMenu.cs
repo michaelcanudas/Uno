@@ -60,13 +60,13 @@ internal class LobbyMenu : MenuWindow
             ImGui.SameLine();
             if (ImGui.Button("Start"))
             {
-                Client.Send(new StartPacket());
+                Client.Send(new StartRequestPacket());
             }
         }
 
-        if (Client.Receive<StartPacket>(out _))
+        if (Client.Receive<StartPacket>(out var startPacket))
         {
-            UnoGame.Current.SwitchScenes(new GameplayScene(playerName, this.players));
+            UnoGame.Current.SwitchScenes(new GameplayScene(playerName, startPacket));
         }
     }
 }

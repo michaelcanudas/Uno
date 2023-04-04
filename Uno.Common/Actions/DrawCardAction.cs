@@ -9,16 +9,20 @@ public class DrawCardAction : PlayerAction
 {
     public class Response : PlayerAction
     {
-        public Card Card { get; set; }
+        public Card[] Cards { get; set; }
 
         public Response()
         {
 
         }
 
-        public Response(Card card)
+        public Response(Card[] cards)
         {
-            Card = card;
+            Cards = cards;
+        }
+
+        public Response(Card card) : this(new[] { card })
+        {
         }
     }
 }

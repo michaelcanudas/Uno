@@ -119,12 +119,11 @@ public static class Game
             Server.SendAll(new SpectatorCountPacket(spectators.Count));
         }
 
-        if (Server.Receive<StartPacket>(out int connection, out _))
+        if (Server.Receive<StartRequestPacket>(out int connection, out _))
         {
             if (connection == elevatedConnection && players.Count >= MIN_PLAYERS)
             {
                 state = State.Playing;
-                Server.SendAll(new StartPacket());
 
                 uno = new(players.ToArray(), new Uno.Settings(AllowRed: true));
             }

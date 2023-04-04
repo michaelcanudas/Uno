@@ -1,6 +1,7 @@
 ﻿using SimulationFramework.Drawing;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ internal class ColorSelectWindow : MenuWindow
 {
     public CardColor? SelectedColor;
 
+    [MemberNotNullWhen(true, nameof(SelectedColor))]
     public bool IsColorSelected => SelectedColor is not null;
 
     bool open = true;

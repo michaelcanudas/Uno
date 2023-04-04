@@ -1,4 +1,7 @@
-﻿using Uno.Actions;
+﻿using System.Linq;
+using System.Numerics;
+using System.Xml.Linq;
+using Uno.Actions;
 using Uno.Packets;
 
 namespace Uno.Server;
@@ -14,23 +17,13 @@ internal class Uno
 
     private Settings settings;
 
-    private CardColor? selectedColor => discard.Count > 0 ? discard.Peek().Face.Kind switch
-    {
-        CardKind.Wild => CardColor.Blue,
-        CardKind.WildDraw4 => CardColor.Blue,
-        _ => null
-    } : null;
     private bool isSkip => discard.Count > 0 && discard.Peek().Face.Kind is CardKind.Skip;
     private bool isReverse => discard.Count > 0 && discard.Peek().Face.Kind is CardKind.Reverse;
-    private bool isAscending = true;
+    private bool isAscending = false;
+    private bool isSelectingColor = false;
 
     public Uno(Player[] players, Settings settings)
     {
-        this.stack = StackCards();
-        
-        this.discard = new Stack<Card>();
-        Move(stack, discard);
-
         this.hands = new List<Card>[players.Length];
         for (int i = 0; i < hands.Length; i++)
         {
@@ -39,18 +32,51 @@ internal class Uno
 
         this.players = players;
         this.current = players[0];
-
         this.settings = settings;
+
+        this.stack = StackCards();
+        this.discard = new Stack<Card>();
+
+        // initial card in discard pile
+        Move(stack, discard);
+
+        // deal initial hands
+        foreach (var player in players)
+        {
+            var hand = GetHand(player);
+
+            for (int i = 0; i < settings.startingCardCount; i++)
+            {
+                Move(stack, hand);
+            }
+        }
+
+        // now that initial game state is setup, give all the clients the initial state
+        foreach (var player in players)
+        {
+            Server.Send(player.Connection, new StartPacket
+            {
+                Players = this.players.Select(p => p.Name).ToArray(),
+                StartingHands = hands.Select(h => h == GetHand(player) ? h.ToArray() : h.Select(c => c with { Face = CardFace.Backface } ).ToArray()).ToArray(),
+                StartingDiscard = discard.Peek()
+            });
+        }
     }
 
     public void Tick()
     {
         foreach (var (id, packet) in Server.Receive<PlayerActionPacket>())
         {
+            // for now, only accept actions from the player who's turn it is
+            // we will need to change this to add challenges and jump ins though
+            if (current.Connection != id)
+                return;
+
             switch (packet.Action)
             {
                 case DrawCardAction action:
                     DrawCard(id, packet.PlayerName, action);
+                    Turn();
                     break;
                 case PlayCardAction action:
                     PlayCard(id, packet.PlayerName, action);
@@ -62,43 +88,55 @@ internal class Uno
         }
     }
 
-    private void DrawCard(int id, string name, DrawCardAction action)
+    private List<Card> GetHand(Player player)
     {
-        if (current.Connection != id)
-            return;
+        return hands[Array.IndexOf(players, player)];
+    }
 
-        int index = Array.IndexOf(players, current);
-        Card? card = Move(stack, hands[index]);
+    private void DrawCard(int id, string name, DrawCardAction action, int count = 1)
+    {
+        List<Card> cards = new();
+        int index = Array.IndexOf(players, players.Single(p => p.Name == name));
+        List<Card> hand = hands[index];
 
-        if (card is null)
-            return;
+        for (int i = 0; i < count; i++)
+        {
+            Card? card = Move(stack, hand);
+            cards.Add(card!); // TODO: handle null (deck is empty). actually, Move() should handle it (prob. reshuffle discard stack)
+        }
 
-        Server.Send(id, new PlayerActionPacket(name, new DrawCardAction.Response(card)));
-        Server.SendAllExcept(id, new PlayerActionPacket(name, new DrawCardAction.Response(card with { Face = CardFace.Backface })));
-
-        Turn();
+        Server.Send(id, new PlayerActionPacket(name, new DrawCardAction.Response(cards.ToArray())));
+        Server.SendAllExcept(id, new PlayerActionPacket(name, new DrawCardAction.Response(cards.Select(c => c with { Face = CardFace.Backface }).ToArray())));
     }
 
     private void PlayCard(int id, string name, PlayCardAction action)
     {
-        if (current.Connection != id)
+        if (isSelectingColor)
             return;
 
         if (!settings.AllowRed && action.Card.Face.Color == CardColor.Red)
             return;
 
-        if (selectedColor is null)
+        if (discard.TryPeek(out var topCard))
         {
-            if (action.Card.Face.Kind != CardKind.Wild && action.Card.Face.Kind != CardKind.WildDraw4)
-                if (action.Card.Face.Color != discard.Peek().Face.Color && action.Card.Face.Kind != discard.Peek().Face.Kind)
-                    return;
+            if (!action.Card.Face.CanBePlayedOn(topCard.Face))
+            {
+                return;
+            }
         }
-        else
-        {
-            if (action.Card.Face.Kind != CardKind.Wild && action.Card.Face.Kind != CardKind.WildDraw4)
-                if (action.Card.Face.Color != selectedColor)
-                    return;
-        }
+        
+        //if (selectedColor is null)
+        //{
+        //    if (action.Card.Face.Kind != CardKind.Wild && action.Card.Face.Kind != CardKind.WildDraw4)
+        //        if (action.Card.Face.Color != discard.Peek().Face.Color && action.Card.Face.Kind != discard.Peek().Face.Kind)
+        //            return;
+        //}
+        //else
+        //{
+        //    if (action.Card.Face.Kind != CardKind.Wild && action.Card.Face.Kind != CardKind.WildDraw4)
+        //        if (action.Card.Face.Color != selectedColor)
+        //            return;
+        //}
 
         int index = Array.IndexOf(players, current);
         bool success = Move(action.Card, hands[index], discard);
@@ -108,23 +146,39 @@ internal class Uno
 
         Server.SendAll(new PlayerActionPacket(name, new PlayCardAction.Response { PlayedCard = action.Card }));
 
-        //if (action.Card.Face.Kind == CardKind.Wild || action.Card.Face.Kind == CardKind.WildDraw4)
-        //    return; [wait for next turn so color is set]
+        if (action.Card.Face.Kind.IsDraw(out int count))
+        {
+            DrawCard(GetNextPlayer().Connection, GetNextPlayer().Name, new DrawCardAction(), count);
+        }
+
+        if (action.Card.Face.Kind.IsWild())
+        {
+            isSelectingColor = true;
+            return; // wait for next turn so color is set
+        }
         
         Turn();
     }
 
     private void SelectColor(int id, string name, SelectColorAction action)
     {
-        if (current.Connection != id)
-            return;
-
         if (!settings.AllowRed && action.Color == CardColor.Red)
             return;
+        
+        var topCard = discard.Peek();
+        topCard.Face = new(topCard.Face.Kind, action.Color);
 
         Server.SendAll(new PlayerActionPacket(name, new SelectColorAction.Response { Color = action.Color }));
 
+        isSelectingColor = false;
+        
         Turn();
+
+        if (topCard.Face.Kind is CardKind.WildDraw4)
+        {
+            // turn() twice to skip the recipient of the 4 cards
+            Turn();
+        }
     }
 
     private void Turn()
@@ -132,15 +186,20 @@ internal class Uno
         if (isReverse)
             isAscending = !isAscending;
 
+        current = GetNextPlayer();
+    }
+
+    private Player GetNextPlayer()
+    {
         int index = Array.IndexOf(players, current);
         int amount = isSkip ? 2 : 1;
         amount *= isAscending ? -1 : 1;
-        
+
         index = (index + amount) % players.Length;
         if (index < 0)
             index += players.Length;
 
-        current = players[index];
+        return players[index];
     }
 
     private bool Move(Card card, List<Card> from, List<Card> to)
@@ -226,6 +285,7 @@ internal class Uno
     }
 
     public record Settings(
-        bool AllowRed = false
+        bool AllowRed = false,
+        int startingCardCount = 7
     );
 }

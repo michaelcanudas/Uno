@@ -111,6 +111,7 @@ internal class NameSelectMenu : MenuWindow
                 else
                 {
                     error = "Invalid or taken name.";
+                    isJoining = false;
                 }
             }
         }

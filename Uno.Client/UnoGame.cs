@@ -10,6 +10,7 @@ using Telepathy;
 using Uno.Client;
 using Uno.Client.MainMenu;
 using Uno.Packets;
+using Uno.Server;
 
 namespace Uno.Client;
 internal class UnoGame : Simulation
@@ -139,5 +140,15 @@ internal class UnoGame : Simulation
         {
             SwitchScenes(new MainMenuScene());
         }
+    }
+
+    public override void OnUninitialize()
+    {
+        if (ServerThread is not null)
+        {
+            Server.Server.Stop();
+        }
+
+        base.OnUninitialize();
     }
 }

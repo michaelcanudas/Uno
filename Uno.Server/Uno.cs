@@ -75,6 +75,15 @@ public class Uno
     {
         foreach (var (id, packet) in Server.Receive<PlayerActionPacket>())
         {
+            switch (packet.Action)
+            {
+                case ChatMessageAction:
+                    Server.SendAll(packet);
+                    break;
+                default:
+                    break;
+            }
+
             // for now, only accept actions from the player who's turn it is
             // we will need to change this to add challenges and jump ins though
             if (current.Connection != id)
@@ -93,6 +102,8 @@ public class Uno
                     break;
                 case SelectColorAction action:
                     SelectColor(id, packet.PlayerName, action);
+                    break;
+                default:
                     break;
             }
         }

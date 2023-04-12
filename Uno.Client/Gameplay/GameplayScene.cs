@@ -23,7 +23,8 @@ internal class GameplayScene : GameScene
     // stack where players draw cards from
     public InteractableCardStack DrawStack { get; set; }
     public Camera Camera;
-    
+
+    public ChatWindow chatWindow;
     private ColorSelectWindow? colorSelectWindow;
     private ActionsBar actionsBar;
     private EscMenu? escMenu;
@@ -55,6 +56,7 @@ internal class GameplayScene : GameScene
         }
 
         actionsBar = new();
+        chatWindow = new();
     }
 
     public override void Render(ICanvas canvas)
@@ -64,9 +66,12 @@ internal class GameplayScene : GameScene
         DrawStack.Render(canvas);
         PlayStack.Render(canvas);
 
-        foreach (var (_, hand) in Hands)
+        foreach (var (name, hand) in Hands)
         {
             hand.Render(canvas);
+
+            if (name == CurrentPlayerName)
+                continue;
         }
 
         base.Render(canvas);
@@ -87,8 +92,14 @@ internal class GameplayScene : GameScene
         }
 
         actionsBar.Layout();
+        chatWindow.Layout();
         colorSelectWindow?.Layout();
         escMenu?.Layout();
+
+        if (escMenu is not null && escMenu.WantClose)
+        {
+            escMenu = null;
+        }
 
         foreach (var packet in Client.Receive<PlayerActionPacket>())
         {
@@ -120,9 +131,17 @@ internal class GameplayScene : GameScene
                     if (packet.PlayerName == this.CurrentPlayerName)
                         this.colorSelectWindow = null; // our color select went through
                     break;
+                case ChatMessageAction chatMessage:
+                    chatWindow.AddMessage(packet.PlayerName, chatMessage.Message);
+                    break;
                 default:
                     throw new Exception("Unknown action type");
             }
+        }
+
+        foreach (var notification in Client.Receive<ServerNotificationPacket>())
+        {
+            chatWindow.AddNotification(notification.Notification);
         }
 
         Camera.Update();
@@ -135,6 +154,11 @@ internal class GameplayScene : GameScene
 
         DrawStack.Update();
         PlayStack.Update();
+
+        if (chatWindow.wantSendMessage)
+        {
+            Client.Send(new PlayerActionPacket(this.CurrentPlayerName, new ChatMessageAction() { Message = chatWindow.CurrentMessage ?? "" }));
+        }
 
         if (colorSelectWindow is not null)
         {

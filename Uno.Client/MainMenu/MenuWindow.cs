@@ -23,11 +23,15 @@ internal abstract class MenuWindow
         Rectangle bounds = new(0, 0, Graphics.GetOutputCanvas().Width, Graphics.GetOutputCanvas().Height);
 
         ImGui.SetNextWindowPos(bounds.GetAlignedPoint(Alignment), ImGuiCond.Always, Pivot);
+        
+        var title = Title ?? this.GetHashCode().ToString();
 
         if (IsModal)
         {
+
+            ImGui.OpenPopup(title);
             bool open = true;
-            if (ImGui.BeginPopupModal(Title ?? string.Empty, ref open, WindowFlags))
+            if (ImGui.BeginPopupModal(title, ref open, WindowFlags))
             {
                 LayoutContent();
                 ImGui.End();
@@ -35,7 +39,7 @@ internal abstract class MenuWindow
         }
         else
         {
-            if (ImGui.Begin(Title ?? string.Empty, WindowFlags))
+            if (ImGui.Begin(title, WindowFlags))
             {
                 LayoutContent();
             }

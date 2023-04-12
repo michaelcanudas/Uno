@@ -40,7 +40,7 @@ internal class PlayerHand
             card.Render(canvas);
         }
 
-        canvas.Stroke(Color.Purple);
+        // canvas.Stroke(Color.Purple);
         // canvas.DrawCircle(Position.X, Position.Y-offset+radius, radius);
     }
 

@@ -14,7 +14,7 @@ internal static class Client
 
     static Client()
     {
-        client = new(4096);
+        client = new(1024 * 100);
         packets = new();
 
         client.OnConnected = Connected;

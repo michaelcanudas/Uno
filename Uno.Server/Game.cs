@@ -4,7 +4,7 @@ namespace Uno.Server;
 
 public static class Game
 {
-    public static Uno uno;
+    private static Uno uno;
 
     private static State state;
     private static List<Player> players;
@@ -36,6 +36,11 @@ public static class Game
                 Playing();
                 break;
         }
+    }
+
+    public static void Command(string[] args)
+    {
+        uno.Command(args);
     }
 
     private static void HandleConnections()

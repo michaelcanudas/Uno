@@ -16,7 +16,7 @@ public static class Server
 
     public static void Start(int port)
     {
-        server = new(4096);
+        server = new(1024 * 100);
         packets = new();
         Connections = new();
 

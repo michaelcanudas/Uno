@@ -40,14 +40,8 @@ public static class Program
                     case "stop":
                         Server.Stop();
                         break;
-                    case "bless":
-                        if (args.Length < 3)
-                            break;
-
-                        string player = args[1];
-                        int count = int.Parse(args[2]);
-
-                        Game.uno.Bless(player, count);
+                    default:
+                        Game.Command(args);
                         break;
                 }
             }

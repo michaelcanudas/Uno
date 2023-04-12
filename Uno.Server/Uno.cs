@@ -104,7 +104,14 @@ internal class Uno
         for (int i = 0; i < count; i++)
         {
             Card? card = Move(stack, hand);
-            cards.Add(card!); // TODO: handle null (deck is empty). actually, Move() should handle it (prob. reshuffle discard stack)
+
+            if (card is null)
+            {
+                ReStackCards();
+                card = Move(stack, hand);
+            }
+
+            cards.Add(card!);
         }
 
         Server.Send(id, new PlayerActionPacket(name, new DrawCardAction.Response(cards.ToArray())));
@@ -261,7 +268,34 @@ internal class Uno
             cards.Add(new Card(id++, CardColor.Neutral, CardKind.WildDraw4));
         }
 
+        ShuffleCards(cards, stack);
+
+        return stack;
+    }
+
+    private void ReStackCards()
+    {
+        Card top = discard.Pop();
         
+        if (discard.Count == 0)
+        {
+            discard = StackCards();
+        }
+
+        while (discard.Count > 0)
+        {
+            Move(discard, stack);
+        }
+        discard.Push(top);
+
+        Stack<Card> newStack = new Stack<Card>();
+        ShuffleCards(stack.ToList(), newStack);
+
+        stack = newStack;
+    }
+
+    private void ShuffleCards(List<Card> cards, Stack<Card> stack)
+    {
         while (cards.Any())
         {
             int index = Random.Shared.Next(cards.Count);
@@ -269,8 +303,6 @@ internal class Uno
             stack.Push(cards[index]);
             cards.RemoveAt(index);
         }
-
-        return stack;
     }
 
     public record Settings(

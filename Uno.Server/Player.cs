@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Uno.Server;
-internal class Player
+public class Player
 {
     public int Connection { get; }
     public string Name { get; }

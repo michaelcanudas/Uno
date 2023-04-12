@@ -6,7 +6,7 @@ using Uno.Packets;
 
 namespace Uno.Server;
 
-internal class Uno
+public class Uno
 {
     private Stack<Card> stack;
     private Stack<Card> discard;
@@ -61,6 +61,14 @@ internal class Uno
                 StartingDiscard = discard.Peek()
             });
         }
+    }
+
+    public void Bless(string name, int count)
+    {
+        CardFace.Random();
+
+        Player player = players.FirstOrDefault(p => p.Name == name)!;
+        DrawCard(player.Connection, player.Name, new DrawCardAction(), count);
     }
 
     public void Tick()

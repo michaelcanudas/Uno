@@ -4,7 +4,7 @@ namespace Uno.Server;
 
 public static class Game
 {
-    private static Uno uno;
+    public static Uno uno;
 
     private static State state;
     private static List<Player> players;

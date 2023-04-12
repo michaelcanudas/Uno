@@ -76,7 +76,9 @@ internal class Uno
             {
                 case DrawCardAction action:
                     DrawCard(id, packet.PlayerName, action);
-                    Turn();
+
+                    if (!settings.PostPickupPlace)
+                        Turn();
                     break;
                 case PlayCardAction action:
                     PlayCard(id, packet.PlayerName, action);
@@ -124,19 +126,6 @@ internal class Uno
                 return;
             }
         }
-        
-        //if (selectedColor is null)
-        //{
-        //    if (action.Card.Face.Kind != CardKind.Wild && action.Card.Face.Kind != CardKind.WildDraw4)
-        //        if (action.Card.Face.Color != discard.Peek().Face.Color && action.Card.Face.Kind != discard.Peek().Face.Kind)
-        //            return;
-        //}
-        //else
-        //{
-        //    if (action.Card.Face.Kind != CardKind.Wild && action.Card.Face.Kind != CardKind.WildDraw4)
-        //        if (action.Card.Face.Color != selectedColor)
-        //            return;
-        //}
 
         int index = Array.IndexOf(players, current);
         bool success = Move(action.Card, hands[index], discard);
@@ -286,6 +275,7 @@ internal class Uno
 
     public record Settings(
         bool AllowRed = false,
+        bool PostPickupPlace = true,
         int startingCardCount = 7
     );
 }

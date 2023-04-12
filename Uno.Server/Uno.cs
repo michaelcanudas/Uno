@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Numerics;
 using System.Xml.Linq;
 using Uno.Actions;
@@ -6,7 +7,7 @@ using Uno.Packets;
 
 namespace Uno.Server;
 
-public class Uno
+internal class Uno
 {
     private Stack<Card> stack;
     private Stack<Card> discard;
@@ -63,12 +64,113 @@ public class Uno
         }
     }
 
-    public void Bless(string name, int count)
+    public void Command(string[] args)
     {
-        CardFace.Random();
+        if (args.Length == 0)
+            return;
 
-        Player player = players.FirstOrDefault(p => p.Name == name)!;
+        string command = args[0];
+        switch (command)
+        {
+            case "players":
+                Players();
+                break;
+            case "peek":
+                if (args.Length < 2)
+                    return;
+
+                Peek(args[1..args.Length]);
+                break;
+            case "give":
+                if (args.Length < 3)
+                    return;
+
+                Give(args[1..args.Length]);
+                break;
+            case "take":
+                if (args.Length < 3)
+                    return;
+
+                Take(args[1..args.Length]);
+                break;
+        }
+    }
+
+    private void Players()
+    {
+        foreach (Player player in players)
+        {
+            Console.WriteLine(player.Connection + ": " + player.Name);
+        }
+    }
+
+    private void Peek(string[] args)
+    {
+        if (args.Length < 1)
+            return;
+
+        var player = players.SingleOrDefault(p => p.Name == args[0]);
+        if (player is null)
+            return;
+        
+        var hand = GetHand(player);
+        foreach (Card c in hand)
+        {
+            Console.WriteLine(c.ID + ": " + c.Face);
+        }
+    }
+    
+    private void Give(string[] args)
+    {
+        if (args.Length < 2)
+            return;
+
+        var player = players.SingleOrDefault(p => p.Name == args[0]);
+        if (player is null)
+            return;
+
+        int count = int.Parse(args[1]);
+
         DrawCard(player.Connection, player.Name, new DrawCardAction(), count);
+    }
+
+    private void Take(string[] args)
+    {
+        if (args.Length < 2)
+            return;
+
+        var player = players.SingleOrDefault(p => p.Name == args[0]);
+        if (player is null)
+            return;
+
+        int count = int.Parse(args[1]);
+
+        bool isRandom = true;
+        List<int> ids = new List<int>();
+        for (int i = 2; i < args.Length; i++)
+        {
+            isRandom = false;
+            ids.Add(int.Parse(args[i]));
+        }
+
+        if (!isRandom && ids.Count != count)
+            return;
+
+        var hand = GetHand(player);
+        for (int i = 0; i < count; i++)
+        {
+            int id = isRandom ? hand.Select(c => c.ID).OrderBy(_ => Guid.NewGuid()).First() : ids[i];
+            var card = hand.SingleOrDefault(c => c.ID == id);
+
+            if (card is null)
+                return;
+
+            bool success = Move(card, hand, discard);
+            if (!success)
+                return;
+
+            Server.SendAll(new PlayerActionPacket(player.Name, new PlayCardAction.Response { PlayedCard = card }));
+        }
     }
 
     public void Tick()

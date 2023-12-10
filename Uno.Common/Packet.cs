@@ -22,7 +22,7 @@ public abstract class Packet
     }
 
     /// <summary>
-    /// Reads the contents a packet from the provided stream and returns that new packet.
+    /// Reads the contents of a packet from the provided stream and returns that new packet.
     /// </summary>
     public static Packet Deserialize(Stream stream)
     {
@@ -90,11 +90,11 @@ public abstract class Packet
             // if the field is an enum we use its base type
             objectType = objectType.IsEnum ? objectType.UnderlyingSystemType : objectType;
 
-            MethodInfo? writerMethod = typeof(BinaryWriter).GetMethod(nameof(BinaryWriter.Write), new[] { objectType });
+            MethodInfo? writerMethod = typeof(BinaryWriter).GetMethod(nameof(BinaryWriter.Write), [objectType]);
 
             if (writerMethod is not null)
             {
-                writerMethod.Invoke(writer, new[] { obj });
+                writerMethod.Invoke(writer, [obj]);
                 return;
             }
 

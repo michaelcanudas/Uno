@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Uno.Client.MainMenu;
 internal abstract class MenuWindow
 {
-    public MainMenuScene? MenuScene => UnoGame.Current.ActiveScene as MainMenuScene;
+    public MenuScene? MenuScene => UnoGame.Current.ActiveScene as MenuScene;
 
     public virtual ImGuiWindowFlags WindowFlags => ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysAutoResize;
     public virtual string Title { get; }

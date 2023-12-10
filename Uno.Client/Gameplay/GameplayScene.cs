@@ -69,9 +69,6 @@ internal class GameplayScene : GameScene
         foreach (var (name, hand) in Hands)
         {
             hand.Render(canvas);
-
-            if (name == CurrentPlayerName)
-                continue;
         }
 
         base.Render(canvas);
@@ -89,6 +86,21 @@ internal class GameplayScene : GameScene
             {
                 escMenu = null;
             }
+        }
+
+        foreach (var (name, hand) in Hands)
+        {
+            if (name == CurrentPlayerName)
+                continue;
+
+            ImGui.PushID(name);
+            ImGui.SetNextWindowPos(new(Camera.WorldToScreen(hand.Position).X + 40, 120));
+            if (ImGui.Begin("##window", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.AlwaysAutoResize))
+            {
+                ImGui.Text(name);
+            }
+            ImGui.End();
+            ImGui.PopID();
         }
 
         actionsBar.Layout();

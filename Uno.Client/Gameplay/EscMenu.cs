@@ -28,7 +28,7 @@ internal class EscMenu : MenuWindow
         if (ImGui.Button("Exit To Menu", new Vector2(buttonWidth, 0)))
         {
             Client.Disconnect();
-            UnoGame.Current.SwitchScenes(new MainMenuScene());
+            UnoGame.Current.SwitchScenes(new MenuScene());
         }
 
         if (ImGui.Button("Exit To Desktop", new Vector2(buttonWidth, 0)))

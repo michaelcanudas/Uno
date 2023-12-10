@@ -11,13 +11,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Uno.Client.MainMenu;
-internal class MainMenuScene : GameScene
+internal class MenuScene : GameScene
 {
     public string? errmsg = null;
 
     public Stack<MenuWindow> windows = new();
 
-    public MainMenuScene()
+    public MenuScene()
     {
         windows.Push(new MainMenuWindow());
     }

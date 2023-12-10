@@ -81,17 +81,22 @@ internal class Uno
 
                 Peek(args[1..args.Length]);
                 break;
+            case "bless":
             case "give":
                 if (args.Length < 3)
                     return;
 
                 Give(args[1..args.Length]);
                 break;
+            case "curse":
             case "take":
                 if (args.Length < 3)
                     return;
 
                 Take(args[1..args.Length]);
+                break;
+            case "spoof":
+                Server.SendAll(new PlayerActionPacket(args[1], new ChatMessageAction() { Message = string.Join(" ", args[2..]) }));
                 break;
         }
     }

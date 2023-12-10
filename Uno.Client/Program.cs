@@ -15,12 +15,17 @@ internal static class Program
 {
     private static void Main()
     {
-        GameScene scene = new MainMenuScene();
+        if (Environment.ProcessPath != null) 
+        {
+            Environment.CurrentDirectory = Path.GetDirectoryName(Environment.ProcessPath)!;
+        }
+
+        GameScene scene = new MenuScene();
         
         // IMPORTANT: COMMENT THIS OUT IF YOU ARENT ME TESTING RENDERING
         // scene = new RendererDemoScene();
         
         var game = new UnoGame(scene);
-        game.RunDesktop();
+        game.Run(new DesktopPlatform());
     }
 }

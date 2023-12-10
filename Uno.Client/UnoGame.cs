@@ -22,7 +22,6 @@ internal class UnoGame : Simulation
     GameScene activeScene;
     GameScene? nextScene;
 
-
     public GameScene ActiveScene => activeScene;
 
     public CardRenderer CardRenderer { get; private set; }
@@ -37,8 +36,8 @@ internal class UnoGame : Simulation
         this.nextScene = nextScene;
     }
 
-    string[] toasts = new[]
-    {
+    string[] toasts =
+    [
         "The Better Version.",
         "Remember Not To Take Breaks.",
         "I'm watching you.",
@@ -47,49 +46,15 @@ internal class UnoGame : Simulation
         "2042",
         "goto UNO",
         string.Join(' ', Enumerable.Repeat("UNO:", 69)),
-    };
+    ];
 
-    // hacky workarounds because i can't seem to write functional fullscreen code :)
-    bool shouldToggleFullscreen;
-    bool isFullscreen = false;
-    int prevW, prevH;
-
-    public override void OnInitialize(AppConfig config)
+    public override void OnInitialize()
     {
         CardRenderer = new();
         Current = this;
         activeScene.Begin();
-        config.Title = "UNO: " + toasts[new Random().Next(0, toasts.Length)];
-
-        // can't do this on render because it corrupts the canvas
-        Application!.Dispatcher.Subscribe<FrameBeginMessage>(m =>
-        {
-            if (shouldToggleFullscreen)
-            {
-                // when the window is maximized it gets screwed up
-                // i am going to rewrite sf's window code soon
-
-                var config = AppConfig.Create();
-                isFullscreen = !isFullscreen;
-                config.Fullscreen = isFullscreen;
-                config.TitlebarHidden = isFullscreen;
-                config.Resizable = !isFullscreen;
-                
-                // if we are entering fullscreen save previous size
-                if (isFullscreen)
-                {
-                    prevW = config.Width;
-                    prevH = config.Height;
-                }
-                else // otherwise restore it
-                {
-                    config.Width = prevW;
-                    config.Height = prevH;
-                }
-
-                config.Apply();
-            }
-        });
+        Window.Title = "UNO: " + toasts[new Random().Next(0, toasts.Length)];
+        Application.Exiting += Application_Exiting;
     }
 
     public override void OnRender(ICanvas canvas)
@@ -97,7 +62,18 @@ internal class UnoGame : Simulation
         if (Client.IsConnected)
             Client.Tick();
 
-        shouldToggleFullscreen = Keyboard.IsKeyPressed(Key.F11);
+        if (Keyboard.IsKeyPressed(Key.F11))
+        {
+            if (Window.IsFullscreen)
+            {
+                Window.ExitFullscreen();
+            }
+            else
+            {
+                Window.EnterFullscreen();
+            }
+        }
+
         if (nextScene is not null)
         {
             activeScene.End();
@@ -107,6 +83,11 @@ internal class UnoGame : Simulation
         }
         
         canvas.Clear(Color.FromHSV(0, 0, .1f));
+        canvas.Antialias(true);
+
+        Rectangle screenBounds = new Rectangle(0, 0, Window.Width, Window.Height);
+        canvas.Fill(new LinearGradient(screenBounds.GetAlignedPoint(Alignment.TopCenter), screenBounds.GetAlignedPoint(Alignment.BottomCenter), Color.FromHSV(0, 0, .1f), Color.FromHSV(0, 0, .2f)));
+        canvas.DrawRect(screenBounds);
 
         activeScene.Update();
         activeScene.Render(canvas);
@@ -126,20 +107,27 @@ internal class UnoGame : Simulation
         // btw, the proper place to handle this is in LobbyMenu
         // each menu/scene does the transition the next one itself
 
-        foreach (var packet in Client.Receive<StopPacket>())
+        if (Client.Receive<StopPacket>(out _))
         {
             // also maybe we shouldnt just like banish them
             // to the main menu maybe be like "omg heyy.. sorry
             // about this but like u cant play xD "
-            SwitchScenes(new MainMenuScene());
+            SwitchScenes(new MenuScene());
         }
 
         // this is actually kinda smort cause like when u
         // get disconnect from server u gotta be canceled
-        foreach (var packet in Client.Receive<DisconnectPacket>())
+        if (Client.Receive<DisconnectPacket>(out _))
         {
-            SwitchScenes(new MainMenuScene());
+            SwitchScenes(new MenuScene());
         }
+
+    }
+
+    private void Application_Exiting(ExitMessage message)
+    {
+        // sf 0.2.1 beta 5 bug: OnUninitialize is not called
+        OnUninitialize();
     }
 
     public override void OnUninitialize()
